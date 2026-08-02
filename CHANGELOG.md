@@ -1,3 +1,14 @@
+## v0.4.0 (2026-08-02)
+
+### Feat
+
+- prepare as a package for pypi, license, et al
+- add pre-commit-audit command to help keep local repos in line
+
+### Fix
+
+- have CI handle releases after successful checks, max automation
+
 ## v0.3.1 (2026-08-02)
 
 ### Fix
