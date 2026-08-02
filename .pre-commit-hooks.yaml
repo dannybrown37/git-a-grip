@@ -17,6 +17,11 @@
   entry: ruff-check-hook
   language: python
   types: [python]
+  # ruff is not a dependency of the package -- only these two hooks need it,
+  # and pulling it into `pip install git-a-grip` would tax the commands with
+  # a compiler-sized wheel they never call. Override the version per repo by
+  # setting your own `additional_dependencies: [ruff==x.y.z]`.
+  additional_dependencies: [ruff>=0.6]
   # Both ruff hooks call `git add`; running them in parallel races index.lock.
   require_serial: true
 
@@ -27,6 +32,7 @@
   entry: ruff-format-hook
   language: python
   types: [python]
+  additional_dependencies: [ruff>=0.6]
   require_serial: true
 
 - id: pytest

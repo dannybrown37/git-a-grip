@@ -1,16 +1,37 @@
 [project]
 name = "git-a-grip"
 version = "0.3.1"
-description = "Personal pre-commit hooks: fail fast on bad commit messages, bump versions on push."
+description = "Pre-commit hooks that fail fast on bad commit messages, re-stage what they fix, and run your tests -- plus a release command and a cross-repo hook audit."
 requires-python = ">=3.11"
 authors = [{ name = "Danny Brown", email = "dannybrown37@gmail.com" }]
 readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+keywords = ["pre-commit", "git", "hooks", "commitizen", "ruff"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Software Development :: Quality Assurance",
+    "Topic :: Software Development :: Version Control :: Git",
+]
 
-# A real dependency rather than something consumers pass via
-# `additional_dependencies`. pre-commit builds this repo an isolated env, so
-# every hook here reaches commitizen the same way no matter how the consuming
-# repo happens to install it
-dependencies = ["commitizen>=4.0", "ruff>=0.6", "pyyaml>=6.0"]
+# What the *commands* need, and nothing else -- this is what a person gets
+# from `uv tool install git-a-grip`. commitizen for `git-release`, pyyaml for
+# `pre-commit-audit`.
+#
+# Hook-only tools are deliberately absent: pre-commit builds each hook its own
+# env, so `.pre-commit-hooks.yaml` declares them per hook via
+# `additional_dependencies` and only the hooks that need one pay for it. A
+# consuming repo still passes nothing.
+dependencies = ["commitizen>=4.0", "pyyaml>=6.0"]
+
+[project.optional-dependencies]
+# For running the hook entry points outside pre-commit (`uv tool install
+# 'git-a-grip[hooks]'`). Keep the ruff pin identical to the one in
+# `.pre-commit-hooks.yaml` -- tests/test_packaging.py asserts they match.
+hooks = ["ruff>=0.6"]
 
 [project.scripts]
 commitizen-early = "git_a_grip.commitizen_early:main_cli"
@@ -22,6 +43,9 @@ pytest-hook = "git_a_grip.pytest_hook:main_cli"
 
 [project.urls]
 Homepage = "https://github.com/dannybrown37/git-a-grip"
+Source = "https://github.com/dannybrown37/git-a-grip"
+Issues = "https://github.com/dannybrown37/git-a-grip/issues"
+Changelog = "https://github.com/dannybrown37/git-a-grip/blob/main/CHANGELOG.md"
 
 [dependency-groups]
 dev = ["pytest>=8.0", "ruff>=0.6"]

@@ -1,0 +1,41 @@
+# Publish to PyPI when git-release pushes a version tag.
+#
+# Authentication is PyPI trusted publishing (OIDC), so there is no API token
+# in this repo's secrets. It requires a one-time pending-publisher entry on
+# pypi.org naming this repo, this workflow file, and the `pypi` environment.
+name: publish
+
+on:
+  push:
+    tags: ['v*']
+
+jobs:
+  # The same job every push and PR runs, not a copy of it. A tag that would
+  # fail CI never reaches the upload step.
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  publish:
+    needs: ci
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      # The OIDC token trusted publishing exchanges for an upload token.
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+
+      # The tag is the version. Publishing something else would put a release
+      # on PyPI that no tag in this repo describes, and PyPI never lets that
+      # version number be reused.
+      - name: Tag matches the packaged version
+        run: |
+          packaged="v$(uv version --short)"
+          if [ "$packaged" != "${GITHUB_REF_NAME}" ]; then
+            echo "tag ${GITHUB_REF_NAME} != packaged ${packaged}" >&2
+            exit 1
+          fi
+
+      - run: uv build
+      - uses: pypa/gh-action-pypi-publish@release/v1

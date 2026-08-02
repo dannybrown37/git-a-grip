@@ -145,6 +145,10 @@ source = { editable = "." }
 dependencies = [
     { name = "commitizen" },
     { name = "pyyaml" },
+]
+
+[package.optional-dependencies]
+hooks = [
     { name = "ruff" },
 ]
 
@@ -158,8 +162,9 @@ dev = [
 requires-dist = [
     { name = "commitizen", specifier = ">=4.0" },
     { name = "pyyaml", specifier = ">=6.0" },
-    { name = "ruff", specifier = ">=0.6" },
+    { name = "ruff", marker = "extra == 'hooks'", specifier = ">=0.6" },
 ]
+provides-extras = ["hooks"]
 
 [package.metadata.requires-dev]
 dev = [

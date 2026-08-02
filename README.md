@@ -5,7 +5,7 @@ Personal [pre-commit](https://pre-commit.com) hooks.
 ```yaml
 repos:
   - repo: https://github.com/dannybrown37/git-a-grip
-    rev: v0.1.0
+    rev: v0.3.1
     hooks:
       - id: commitizen-early
       - id: ruff-check
@@ -18,6 +18,12 @@ The commitizen and ruff hooks reach their tool through
 `sys.executable -m <tool>` inside the env pre-commit builds for this repo, so
 a consuming project needs no `cz` or `ruff` on PATH, no venv and no
 `uv`/`uvx` of its own. (`pytest` is the exception — see below.)
+
+Each hook pays only for what it uses: commitizen is a dependency of the
+package, while ruff is declared by the two ruff hooks themselves, through
+`additional_dependencies` in `.pre-commit-hooks.yaml`. You still pass
+nothing. Pin your own ruff by setting `additional_dependencies:
+[ruff==x.y.z]` on the hook.
 
 ## `commitizen-early` (pre-commit stage)
 
@@ -36,7 +42,7 @@ defers whenever it finds no message:
 
 ```yaml
   - repo: https://github.com/dannybrown37/git-a-grip
-    rev: v0.1.0
+    rev: v0.3.1
     hooks:
       - id: commitizen-early
 
@@ -55,7 +61,7 @@ the rest of the stage.
 Bump, tag and push, in that order, exiting 0. Point your push alias at it:
 
 ```bash
-alias gp='uvx --from git+https://github.com/dannybrown37/git-a-grip git-release'
+alias gp='uvx --from git-a-grip git-release'
 ```
 
 On `main` it bumps and pushes; on any other branch it just pushes, so it can
@@ -131,7 +137,7 @@ Audit every local repo's pre-commit setup at once, so a hook that drifted or
 never got installed shows up as a line rather than a surprise:
 
 ```bash
-uvx --from git+https://github.com/dannybrown37/git-a-grip pre-commit-audit
+uvx --from git-a-grip pre-commit-audit
 ```
 
 It walks the given trees (default: this repo's sibling directories), stops at
@@ -143,6 +149,32 @@ usable config at all. `--json` emits the same data unformatted.
 ```bash
 pre-commit-audit ~/projects ~/work
 pre-commit-audit --json | jq '.[] | select(.hooks == [])'
+```
+
+## Installing the commands
+
+The hooks need no installation — pre-commit builds this repo an isolated env
+from the `rev` you pin. The two commands (`git-release`, `pre-commit-audit`)
+are ordinary console scripts, published to PyPI:
+
+```bash
+uvx --from git-a-grip pre-commit-audit    # one-off
+uv tool install git-a-grip                # both commands, on PATH
+```
+
+That install carries only what the commands import — commitizen and pyyaml —
+not the ruff the hooks use. To run the hook entry points by hand as well, ask
+for the extra:
+
+```bash
+uv tool install 'git-a-grip[hooks]'
+```
+
+Straight from a tag works too, and is the way to run something not yet
+released:
+
+```bash
+uvx --from git+https://github.com/dannybrown37/git-a-grip@v0.3.1 git-release
 ```
 
 ## Development

@@ -1,0 +1,62 @@
+# Lint, test, and prove the package still builds and installs.
+#
+# Also callable (`workflow_call`), so publish.yml gates a release on this
+# exact job rather than a copy of it that can drift.
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_call:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # The floor in requires-python and whatever is current: the two
+        # versions where a syntax or stdlib assumption actually breaks.
+        python-version: ['3.11', '3.13']
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          enable-cache: true
+
+      - run: uv sync
+
+      - name: Lint
+        run: uv run ruff check --config .ruff.toml src tests
+
+      - name: Format
+        run: uv run ruff format --check --config .ruff.toml src tests
+
+      - name: Test
+        run: uv run pytest -q
+
+      - name: Build
+        run: uv build
+
+      # The commands must work from a bare wheel with no dev group and no
+      # `hooks` extra -- that is what `uv tool install git-a-grip` gets, and
+      # it is exactly what the dependency split could break.
+      - name: Commands run from the built wheel alone
+        run: |
+          uv run --isolated --no-project --with dist/*.whl \
+            pre-commit-audit --help
+          uv run --isolated --no-project --with dist/*.whl \
+            git-release --help
+
+      # The hooks are the other half of the split. try-repo builds them from
+      # .pre-commit-hooks.yaml in the isolated env a consumer would get, so
+      # this fails if ruff stops arriving via additional_dependencies -- which
+      # the repo's own config, using `language: system` locally, cannot catch.
+      - name: Hooks install and run as a consumer would get them
+        run: uv run --with pre-commit pre-commit try-repo . --all-files
+
+      - name: This repo's own config still passes
+        run: uv run --with pre-commit pre-commit run --all-files
