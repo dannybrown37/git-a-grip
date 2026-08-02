@@ -83,6 +83,24 @@ def test_bump_failure_propagates(
     assert on_clean_main == []
 
 
+def test_bump_commit_skips_hooks(
+    on_clean_main: list[str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """`cz bump` commits; without --no-verify it re-enters the hook suite."""
+    invocations: list[tuple[str, ...]] = []
+
+    def fake_cz(*args: str) -> subprocess.CompletedProcess[str]:
+        invocations.append(args)
+        return _completed(stdout='0.2.0' if 'version' in args else '')
+
+    monkeypatch.setattr(bump_on_push.cz, 'run', fake_cz)
+    bump_on_push.main()
+
+    assert invocations[0] == ('bump', '--yes', '--no-verify')
+    assert on_clean_main == ['push --no-verify --follow-tags origin main']
+
+
 def test_successful_bump_pushes_then_cancels(
     on_clean_main: list[str],
     monkeypatch: pytest.MonkeyPatch,

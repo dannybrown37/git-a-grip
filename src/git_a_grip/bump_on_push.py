@@ -56,7 +56,11 @@ def main() -> int:
         )
         return 1
 
-    result = cz.run('bump', '--yes')
+    # --no-verify because `cz bump` makes a commit of its own, and that commit
+    # would otherwise re-run the whole pre-commit stage from inside this
+    # pre-push hook. The content being committed is generated (version files,
+    # CHANGELOG) and the hooks already passed on the commits being released.
+    result = cz.run('bump', '--yes', '--no-verify')
     if result.returncode in {NO_COMMITS_FOUND, NONE_INCREMENT}:
         sys.stdout.write(
             'pre-push: no version-bumping commits since the last tag, '
