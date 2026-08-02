@@ -51,7 +51,31 @@ defers whenever it finds no message:
 Put it first and give it `fail_fast: true` if you want it to short-circuit
 the rest of the stage.
 
+## `git-release` (command, not a hook)
+
+Bump, tag and push, in that order, exiting 0. **Prefer this over
+`bump-on-push`.** Point your push alias at it:
+
+```bash
+alias gp='uvx --from git+https://github.com/dannybrown37/git-a-grip git-release'
+```
+
+On `main` it bumps and pushes; on any other branch it just pushes, so it can
+replace `git push` outright. Refuses to run against a dirty tree, and pushes
+anyway when there are no bumpable commits.
+
+This exists because a pre-push hook *cannot* do this cleanly. Git chooses
+which sha to push before hooks run, so a commit created afterwards leaves two
+options: cancel the push, or let git push the now-superseded sha and have it
+rejected as a non-fast-forward. Both end in `error: failed to push some refs`
+on top of a release that worked. Running as a command puts the bump before
+the push and the problem disappears.
+
 ## `bump-on-push` (pre-push stage)
+
+Superseded by `git-release` above; kept for repos already wired to it.
+
+
 
 Turns the conventional commits since the last tag into a version bump,
 changelog entry and tag, then pushes them — so a push and a release are the
