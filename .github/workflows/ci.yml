@@ -1,14 +1,14 @@
-# Lint, test, and prove the package still builds and installs.
+# Check every push and PR; on a green main, cut the release tag.
 #
-# Also callable (`workflow_call`), so publish.yml gates a release on this
-# exact job rather than a copy of it that can drift.
+# The release is CI's consequence, not its cause: nothing is bumped or tagged
+# until lint, tests, and the install proofs have passed on the merged commit.
+# Pushing the tag is what triggers publish.yml.
 name: ci
 
 on:
   push:
     branches: [main]
   pull_request:
-  workflow_call:
 
 jobs:
   check:
@@ -60,3 +60,61 @@ jobs:
 
       - name: This repo's own config still passes
         run: uv run --with pre-commit pre-commit run --all-files
+
+  bump:
+    needs: [check]
+    # Only a green push to main releases, and never the bump's own commit --
+    # that would recurse.
+    if: >-
+      github.event_name == 'push'
+      && github.ref == 'refs/heads/main'
+      && !startsWith(github.event.head_commit.message, 'bump:')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Full history so commitizen can read the tags it bumps from, and a
+          # PAT because pushes made with the default GITHUB_TOKEN do not
+          # trigger workflows -- the tag would land and publish.yml would
+          # never fire.
+          fetch-depth: 0
+          token: ${{ secrets.BUMP_TOKEN }}
+
+      - uses: astral-sh/setup-uv@v5
+
+      - name: Configure git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Bump version and tag
+        id: cz
+        run: |
+          PRE_SHA="$(git rev-parse HEAD)"
+          # --no-raise 21: "no commits eligible for a bump" is the normal
+          # outcome of a docs- or chore-only push, not a failure.
+          uv run cz --no-raise 21 bump --yes
+          POST_SHA="$(git rev-parse HEAD)"
+          if [[ "$PRE_SHA" == "$POST_SHA" ]]; then
+            echo "bumped=false" >>"$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "bumped=true" >>"$GITHUB_OUTPUT"
+
+          # cz bump rewrites the version in pyproject.toml only, so uv.lock's
+          # embedded git-a-grip version drifts. Re-lock and fold that into the
+          # bump commit, keeping the tag on the commit it names.
+          uv lock
+          if ! git diff --quiet -- uv.lock; then
+            TAG="$(git describe --tags --exact-match HEAD)"
+            git tag -d "$TAG"
+            git add uv.lock
+            git commit --amend --no-edit
+            git tag -a "$TAG" -m "$TAG"
+          fi
+
+      - name: Push bump commit and tag
+        if: steps.cz.outputs.bumped == 'true'
+        run: git push origin "HEAD:${{ github.ref_name }}" --tags

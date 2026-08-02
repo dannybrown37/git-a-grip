@@ -58,11 +58,18 @@ the rest of the stage.
 
 ## `git-release` (command, not a hook)
 
-Bump, tag and push, in that order, exiting 0. Point your push alias at it:
+Bump, tag and push, in that order, exiting 0. For repos that release from a
+laptop rather than from CI. Give it an alias that says what it does — not
+`gp`, which reads as `git push` right up until it publishes something:
 
 ```bash
-alias gp='uvx --from git-a-grip git-release'
+alias release='uvx --from git-a-grip git-release'
 ```
+
+This repo itself no longer uses it: releases here are cut by CI once the
+checks on `main` pass (see below). The command remains for projects with no
+such pipeline, where the alternative is remembering the four commands by
+hand.
 
 On `main` it bumps and pushes; on any other branch it just pushes, so it can
 replace `git push` outright. Refuses to run against a dirty tree, and pushes
@@ -176,6 +183,19 @@ released:
 ```bash
 uvx --from git+https://github.com/dannybrown37/git-a-grip@v0.3.1 git-release
 ```
+
+## Releasing
+
+Merge to `main`. That is the whole gesture.
+
+`ci.yml` runs lint, tests and the install proofs on the merged commit; only
+if they all pass does its `bump` job run `cz bump`, which writes the version
+and changelog, commits, and tags. Pushing that tag triggers `publish.yml`,
+which builds and uploads to PyPI via trusted publishing. A push with no
+bumpable commits (docs, chores) ends after the checks and releases nothing.
+
+Nothing is tagged before the checks pass, so a red build cannot leave a
+version number stranded on a release that never shipped.
 
 ## Development
 

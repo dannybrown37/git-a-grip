@@ -1,4 +1,7 @@
-# Publish to PyPI when git-release pushes a version tag.
+# Publish to PyPI when ci.yml's bump job pushes a version tag.
+#
+# By the time a tag exists, CI has already passed on that commit -- the bump
+# job is gated on it -- so this workflow only builds and uploads.
 #
 # Authentication is PyPI trusted publishing (OIDC), so there is no API token
 # in this repo's secrets. It requires a one-time pending-publisher entry on
@@ -10,23 +13,13 @@ on:
     tags: ['v*']
 
 jobs:
-  # The same job every push and PR runs, not a copy of it. A tag that would
-  # fail CI never reaches the upload step.
-  ci:
-    uses: ./.github/workflows/ci.yml
-
-  publish:
-    needs: ci
+  build:
     runs-on: ubuntu-latest
-    environment: pypi
-    permissions:
-      # The OIDC token trusted publishing exchanges for an upload token.
-      id-token: write
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
 
-      # The tag is the version. Publishing something else would put a release
+      # The tag is the version. Publishing anything else would put a release
       # on PyPI that no tag in this repo describes, and PyPI never lets that
       # version number be reused.
       - name: Tag matches the packaged version
@@ -38,4 +31,23 @@ jobs:
           fi
 
       - run: uv build
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      # The OIDC token trusted publishing exchanges for an upload token.
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
       - uses: pypa/gh-action-pypi-publish@release/v1
