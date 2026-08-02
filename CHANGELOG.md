@@ -1,3 +1,10 @@
+## v0.3.0 (2026-08-02)
+
+### Feat
+
+- remove bump-on-push in favour of the git-release command
+- git-release command that bumps before pushing
+
 ## v0.2.0 (2026-08-02)
 
 ### Feat
