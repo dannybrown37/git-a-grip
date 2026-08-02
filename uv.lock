@@ -140,10 +140,11 @@ wheels = [
 
 [[package]]
 name = "git-a-grip"
-version = "0.3.0"
+version = "0.3.1"
 source = { editable = "." }
 dependencies = [
     { name = "commitizen" },
+    { name = "pyyaml" },
     { name = "ruff" },
 ]
 
@@ -156,6 +157,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "commitizen", specifier = ">=4.0" },
+    { name = "pyyaml", specifier = ">=6.0" },
     { name = "ruff", specifier = ">=0.6" },
 ]
 

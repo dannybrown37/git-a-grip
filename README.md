@@ -125,6 +125,26 @@ which would otherwise point the runner at an environment holding none of your
 project's dependencies. Narrow when it runs with `files:` (default
 `^(src/|tests/).*`).
 
+## `pre-commit-audit` (command, not a hook)
+
+Audit every local repo's pre-commit setup at once, so a hook that drifted or
+never got installed shows up as a line rather than a surprise:
+
+```bash
+uvx --from git+https://github.com/dannybrown37/git-a-grip pre-commit-audit
+```
+
+It walks the given trees (default: this repo's sibling directories), stops at
+each git working tree, and reports four things: which of this repo's hooks
+each project uses and the `rev` it pins, third-party hooks grouped by source
+repo and rev, one-off `repo: local` hooks with their entry, and repos with no
+usable config at all. `--json` emits the same data unformatted.
+
+```bash
+pre-commit-audit ~/projects ~/work
+pre-commit-audit --json | jq '.[] | select(.hooks == [])'
+```
+
 ## Development
 
 ```bash

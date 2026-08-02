@@ -10,10 +10,11 @@ readme = "README.md"
 # `additional_dependencies`. pre-commit builds this repo an isolated env, so
 # every hook here reaches commitizen the same way no matter how the consuming
 # repo happens to install it
-dependencies = ["commitizen>=4.0", "ruff>=0.6"]
+dependencies = ["commitizen>=4.0", "ruff>=0.6", "pyyaml>=6.0"]
 
 [project.scripts]
 commitizen-early = "git_a_grip.commitizen_early:main_cli"
+pre-commit-audit = "git_a_grip.audit:main_cli"
 git-release = "git_a_grip.release:main_cli"
 ruff-check-hook = "git_a_grip.ruff_hooks:check_cli"
 ruff-format-hook = "git_a_grip.ruff_hooks:format_cli"
