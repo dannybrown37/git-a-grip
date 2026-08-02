@@ -1,0 +1,66 @@
+default_install_hook_types: [pre-commit, commit-msg, pre-push]
+default_stages: [pre-commit]
+
+repos:
+  # Dogfood: this repo's own hooks, run from the working tree rather than a
+  # pinned rev, so a change that breaks them fails here before it ships.
+  - repo: local
+    hooks:
+      - id: commitizen-early
+        name: Commitizen check (early)
+        entry: uv run commitizen-early
+        language: system
+        always_run: true
+        pass_filenames: false
+        fail_fast: true
+
+      - id: bump-on-push
+        name: Bump version and push
+        entry: uv run bump-on-push
+        language: system
+        stages: [pre-push]
+        always_run: true
+        pass_filenames: false
+
+  - repo: https://github.com/commitizen-tools/commitizen
+    rev: v4.17.0
+    hooks:
+      - id: commitizen
+        stages: [commit-msg]
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: end-of-file-fixer
+      - id: check-merge-conflict
+      - id: check-toml
+      - id: check-yaml
+      - id: mixed-line-ending
+
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.1
+    hooks:
+      - id: gitleaks
+
+  - repo: local
+    hooks:
+      - id: ruff-check
+        name: Ruff check
+        entry: uv run ruff check --fix --config .ruff.toml
+        language: system
+        types: [python]
+        pass_filenames: true
+
+      - id: ruff-format
+        name: Ruff format
+        entry: bash -c 'uv run ruff format --config .ruff.toml "$@" && git add "$@"' --
+        language: system
+        types: [python]
+        require_serial: true
+
+      - id: tests
+        name: Tests
+        entry: uv run pytest tests/ -q
+        language: system
+        files: ^(src/|tests/).*
+        pass_filenames: false

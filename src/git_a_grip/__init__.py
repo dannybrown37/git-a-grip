@@ -1,0 +1,1 @@
+"""Personal pre-commit hooks."""

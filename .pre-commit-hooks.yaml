@@ -1,0 +1,21 @@
+- id: commitizen-early
+  name: Commitizen check (early)
+  description: >-
+    Reject a non-conventional commit message during the pre-commit stage,
+    before the slow hooks run, by recovering it from git's argv.
+  entry: commitizen-early
+  language: python
+  stages: [pre-commit]
+  always_run: true
+  pass_filenames: false
+
+- id: bump-on-push
+  name: Bump version and push
+  description: >-
+    On push, turn the conventional commits since the last tag into a version
+    bump, changelog entry and tag, then push them.
+  entry: bump-on-push
+  language: python
+  stages: [pre-push]
+  always_run: true
+  pass_filenames: false

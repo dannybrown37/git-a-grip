@@ -1,0 +1,67 @@
+line-length = 79
+show-fixes = true
+target-version = "py311"
+
+[lint]
+select = [
+  "A",  # https://beta.ruff.rs/docs/rules/#flake8-builtins-a
+  "ANN",  # https://beta.ruff.rs/docs/rules/#flake8-annotations-ann
+  "ARG",  # https://beta.ruff.rs/docs/rules/#flake8-unused-arguments-arg
+  "B",  # https://beta.ruff.rs/docs/rules/#flake8-bugbear-b
+  "C4",  # https://beta.ruff.rs/docs/rules/#flake8-comprehensions-c4
+  "COM",  # https://beta.ruff.rs/docs/rules/#flake8-commas-com
+  "C90",  # https://beta.ruff.rs/docs/rules/#mccabe-c90
+  "D200",  # One-line docstring should fit on one line
+  "D201",  # No blank lines allowed before function docstring
+  "D202",  # No blank lines allowed after function docstring
+  "D205",  # 1 blank line required between summary line and description
+  "D212",  # Multi-line docstring summary should start at the first line
+  "E",  # default! https://beta.ruff.rs/docs/rules/#error-e
+  "EM",  # https://beta.ruff.rs/docs/rules/#flake8-errmsg-em
+  "ERA",  # https://beta.ruff.rs/docs/rules/#eradicate-era
+  "EXE",  # https://beta.ruff.rs/docs/rules/#flake8-executable-exe
+  "F",  # default! https://beta.ruff.rs/docs/rules/#pyflakes-f
+  "FBT",  # https://beta.ruff.rs/docs/rules/#flake8-boolean-trap-fbt
+  "G",  # https://beta.ruff.rs/docs/rules/#flake8-logging-format-g
+  "I",  # https://beta.ruff.rs/docs/rules/#isort-i
+  "ICN",  # https://beta.ruff.rs/docs/rules/#flake8-import-conventions-icn
+  "ISC",  # https://beta.ruff.rs/docs/rules/#flake8-implicit-str-concat-isc
+  "N",  # https://beta.ruff.rs/docs/rules/#pep8-naming-n
+  "PGH",  # https://beta.ruff.rs/docs/rules/#pygrep-hooks-pgh
+  "PIE",  # https://beta.ruff.rs/docs/rules/#flake8-pie-pie
+  "PL",  # https://beta.ruff.rs/docs/rules/#pylint-pl
+  "PLE",  # https://beta.ruff.rs/docs/rules/#error-ple
+  "PLR",  # https://beta.ruff.rs/docs/rules/#refactor-plr
+  "PLW",  # https://beta.ruff.rs/docs/rules/#warning-plw
+  "PT",  # https://beta.ruff.rs/docs/rules/#flake8-pytest-style-pt
+  "PTH",  # https://beta.ruff.rs/docs/rules/#flake8-use-pathlib-pth
+  "PYI",  # https://beta.ruff.rs/docs/rules/#flake8-pyi-pyi
+  "Q",  # https://beta.ruff.rs/docs/rules/#flake8-quotes-q
+  "RET",  # https://beta.ruff.rs/docs/rules/#flake8-return-ret
+  "RSE",  # https://beta.ruff.rs/docs/rules/#flake8-raise-rse
+  "RUF",  # https://beta.ruff.rs/docs/rules/#ruff-specific-rules-ruf
+  "S",  # https://beta.ruff.rs/docs/rules/#flake8-bandit-s
+  "SLF",  # https://beta.ruff.rs/docs/rules/#flake8-self-slf
+  "SIM",  # https://beta.ruff.rs/docs/rules/#flake8-simplify-sim
+  "TCH",  # https://beta.ruff.rs/docs/rules/#flake8-type-checking-tch
+  "TID",  # https://beta.ruff.rs/docs/rules/#flake8-tidy-imports-tid
+  "TRY",  # https://beta.ruff.rs/docs/rules/#tryceratops-try
+  "W",  # https://beta.ruff.rs/docs/rules/#warning-w
+  "UP",  # https://beta.ruff.rs/docs/rules/#pyupgrade-up
+  "YTT",  # https://beta.ruff.rs/docs/rules/#flake8-2020-ytt
+]
+ignore = [
+  "S311",  # not using randomness for cryptography
+  "S101",  # assert is awesome
+  "I001",  # I do not care for its sorting choices
+  "S113",  # requests calls without timeouts are fine
+  "PLR0913",  # sometimes tests need 6+ fixtures
+  "PLC0415",  # deliberate lazy imports (CLI startup time, circular imports)
+]
+
+[lint.flake8-quotes]
+inline-quotes = "single"
+
+[format]
+quote-style = "single"
+docstring-code-format = true
