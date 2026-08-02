@@ -1,3 +1,9 @@
+## v0.3.1 (2026-08-02)
+
+### Fix
+
+- refuse to release on unrecognised arguments
+
 ## v0.3.0 (2026-08-02)
 
 ### Feat
