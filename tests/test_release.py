@@ -12,6 +12,7 @@ if TYPE_CHECKING:
 
 BUMP_FAILURE_CODE = 7
 PUSH_FAILURE_CODE = 128
+UNKNOWN_ARG_CODE = 2
 
 
 def _completed(
@@ -123,3 +124,26 @@ def test_push_failure_after_a_bump_is_reported(
 
     assert release.main([]) == PUSH_FAILURE_CODE
     assert 'bumped to v0.3.0 locally' in capsys.readouterr().err
+
+
+def test_help_prints_usage_without_releasing(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    log = _arrange(monkeypatch)
+
+    assert release.main(['--help']) == 0
+    assert log == []
+    assert 'git-release' in capsys.readouterr().out
+
+
+def test_unknown_argument_refuses_to_release(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """A publishing command must not treat an unknown flag as consent."""
+    log = _arrange(monkeypatch)
+
+    assert release.main(['--dry-run']) == UNKNOWN_ARG_CODE
+    assert log == []
+    assert '--dry-run' in capsys.readouterr().err

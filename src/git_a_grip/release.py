@@ -60,9 +60,43 @@ def _push(branch: str, *extra: str) -> int:
     return pushed.returncode
 
 
+USAGE = """\
+git-release -- bump the version, tag it, and push, in that order.
+
+  git-release              on main: bump, tag and push; elsewhere: just push
+  git-release --any-branch release from the current branch, whatever it is
+  git-release --help       show this
+
+Configure what the bump rewrites via [tool.commitizen] in the repo.
+"""
+
+
+def check_args(args: list[str]) -> int | None:
+    """Return an exit code if the args mean "do not release", else None."""
+    if '--help' in args or '-h' in args:
+        sys.stdout.write(USAGE)
+        return 0
+    # This command publishes. An argument it does not understand may well be
+    # someone asking for something other than "release now", so refuse rather
+    # than ignore it and push.
+    unknown = [a for a in args if a != '--any-branch']
+    if unknown:
+        sys.stderr.write(
+            f'release: unrecognised argument(s): {" ".join(unknown)}\n\n',
+        )
+        sys.stderr.write(USAGE)
+        return 2
+    return None
+
+
 def main(argv: list[str] | None = None) -> int:
     """Bump if there is anything to release, then push. 0 means done."""
     args = sys.argv[1:] if argv is None else argv
+
+    refused = check_args(args)
+    if refused is not None:
+        return refused
+
     branch = current_branch()
     if branch != PROTECTED_DEFAULT and '--any-branch' not in args:
         # Not the release branch: just push, so this can stand in for
@@ -76,6 +110,10 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 1
 
+    return _bump_and_push(branch)
+
+
+def _bump_and_push(branch: str) -> int:
     result = cz.run('bump', '--yes', '--no-verify')
     if result.returncode in {NO_COMMITS_FOUND, NONE_INCREMENT}:
         sys.stdout.write('No version-bumping commits since the last tag.\n')
