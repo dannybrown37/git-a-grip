@@ -1,10 +1,10 @@
 """Bump, tag and push as one command -- the ordering pre-push cannot have.
 
-`bump-on-push` does the same work from a pre-push hook, where git has already
-chosen which sha to push before any hook runs. A commit created after that
-decision can only end two ways: cancel the push, or let git push the pre-bump
-sha and watch it rejected as a non-fast-forward. Both print
-`error: failed to push some refs` over a release that actually succeeded.
+This replaces a pre-push hook that did the same work (removed in v0.3.0).
+There, git had already chosen which sha to push before any hook ran, so a
+commit created afterwards could only end two ways: cancel the push, or let
+git push the superseded sha and watch it rejected as a non-fast-forward. Both
+print `error: failed to push some refs` over a release that succeeded.
 
 Run as a command instead, the order is simply right: bump first, push second,
 exit 0. Nothing to cancel, nothing to explain away. Point whatever alias you
@@ -45,8 +45,8 @@ def is_dirty() -> bool:
 
 
 def _push(branch: str, *extra: str) -> int:
-    # --no-verify so a pre-push hook (including bump-on-push, if a repo still
-    # has it wired) cannot re-enter this.
+    # --no-verify so any pre-push hook the repo still has wired cannot
+    # re-enter this.
     pushed = git(
         'push',
         '--no-verify',

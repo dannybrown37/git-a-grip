@@ -1,4 +1,4 @@
-default_install_hook_types: [pre-commit, commit-msg, pre-push]
+default_install_hook_types: [pre-commit, commit-msg]
 default_stages: [pre-commit]
 
 repos:
@@ -13,14 +13,6 @@ repos:
         always_run: true
         pass_filenames: false
         fail_fast: true
-
-      - id: bump-on-push
-        name: Bump version and push
-        entry: uv run bump-on-push
-        language: system
-        stages: [pre-push]
-        always_run: true
-        pass_filenames: false
 
   - repo: https://github.com/commitizen-tools/commitizen
     rev: v4.17.0

@@ -8,7 +8,6 @@ repos:
     rev: v0.1.0
     hooks:
       - id: commitizen-early
-      - id: bump-on-push
       - id: ruff-check
       - id: ruff-format
       - id: pytest
@@ -53,8 +52,7 @@ the rest of the stage.
 
 ## `git-release` (command, not a hook)
 
-Bump, tag and push, in that order, exiting 0. **Prefer this over
-`bump-on-push`.** Point your push alias at it:
+Bump, tag and push, in that order, exiting 0. Point your push alias at it:
 
 ```bash
 alias gp='uvx --from git+https://github.com/dannybrown37/git-a-grip git-release'
@@ -71,25 +69,12 @@ rejected as a non-fast-forward. Both end in `error: failed to push some refs`
 on top of a release that worked. Running as a command puts the bump before
 the push and the problem disappears.
 
-## `bump-on-push` (pre-push stage)
+Configure what the bump rewrites via `[tool.commitizen]` in the consuming
+repo (`version_provider`, `version_files`).
 
-Superseded by `git-release` above; kept for repos already wired to it.
-
-
-
-Turns the conventional commits since the last tag into a version bump,
-changelog entry and tag, then pushes them — so a push and a release are the
-same gesture. Configure what gets rewritten via `[tool.commitizen]` in the
-consuming repo (`version_provider`, `version_files`).
-
-Only acts on `main`, and refuses to run against a dirty tree.
-
-**It ends with `error: failed to push some refs`, and that is expected.** The
-bump commit does not exist when git decides what to push, so the hook pushes
-the bumped ref itself and then fails the original push, which pointed at the
-pre-bump sha. Everything is already pushed by the time you see the error; the
-explanation prints just above it. Without this, the version artifacts would
-sit unpushed and consumers would resolve a stale tag.
+> A `bump-on-push` pre-push hook did this up to v0.2.1 and was removed in
+> v0.3.0 for the reason above. If you pin an older rev, that hook still
+> exists there; on upgrading, drop `- id: bump-on-push` and use this command.
 
 ## `ruff-check` and `ruff-format` (pre-commit stage)
 
