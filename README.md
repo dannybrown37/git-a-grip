@@ -9,11 +9,16 @@ repos:
     hooks:
       - id: commitizen-early
       - id: bump-on-push
+      - id: ruff-check
+      - id: ruff-format
+      - id: pytest
+        args: [tests/, -q]
 ```
 
-Both hooks reach commitizen through `sys.executable -m commitizen` inside the
-env pre-commit builds for this repo, so a consuming project needs no `cz` on
-PATH, no venv and no `uv`/`uvx` of its own.
+The commitizen and ruff hooks reach their tool through
+`sys.executable -m <tool>` inside the env pre-commit builds for this repo, so
+a consuming project needs no `cz` or `ruff` on PATH, no venv and no
+`uv`/`uvx` of its own. (`pytest` is the exception — see below.)
 
 ## `commitizen-early` (pre-commit stage)
 
@@ -61,6 +66,55 @@ the bumped ref itself and then fails the original push, which pointed at the
 pre-bump sha. Everything is already pushed by the time you see the error; the
 explanation prints just above it. Without this, the version artifacts would
 sit unpushed and consumers would resolve a stale tag.
+
+## `ruff-check` and `ruff-format` (pre-commit stage)
+
+`ruff check --fix` and `ruff format`, with the fixes **re-staged** so they are
+part of the commit you just made rather than a dirty working tree you have to
+`git add` and amend. Only the violations ruff could not fix stop the commit,
+via ruff's own exit code.
+
+Pass ruff's flags through `args`:
+
+```yaml
+      - id: ruff-check
+        args: [--config, .ruff.toml]
+```
+
+`--force-exclude` is always passed, so the `exclude` in your ruff config still
+applies to the paths pre-commit hands over explicitly. The re-staged set is
+narrowed by content digest — a file ruff did not change is never touched, and
+because pre-commit stashes unstaged changes while a hook runs, re-adding a
+file cannot sweep in an edit you deliberately left unstaged.
+
+The ruff version is this repo's pinned dependency. To hold a repo at a
+different one:
+
+```yaml
+      - id: ruff-format
+        additional_dependencies: [ruff==0.16.1]
+```
+
+## `pytest` (pre-commit stage)
+
+Runs the test suite from the repo root. This hook can't use the isolated env
+pre-commit builds here — a test suite needs the *consuming* project's
+dependencies — so it shells out to a runner that resolves that environment,
+`uv run pytest` by default. Everything else in `args` goes to pytest:
+
+```yaml
+      - id: pytest
+        args: [tests/, -q]
+
+      - id: pytest
+        args: ['--runner=uv run --extra api pytest', tests/, -q]
+```
+
+It runs from the repo root regardless of where git was invoked, and drops the
+`VIRTUAL_ENV`/`PYTHONPATH` that pre-commit exports for its own hook env —
+which would otherwise point the runner at an environment holding none of your
+project's dependencies. Narrow when it runs with `files:` (default
+`^(src/|tests/).*`).
 
 ## Development
 

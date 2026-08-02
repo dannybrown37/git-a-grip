@@ -10,11 +10,14 @@ readme = "README.md"
 # `additional_dependencies`. pre-commit builds this repo an isolated env, so
 # every hook here reaches commitizen the same way no matter how the consuming
 # repo happens to install it -- which is the whole reason this repo exists.
-dependencies = ["commitizen>=4.0"]
+dependencies = ["commitizen>=4.0", "ruff>=0.6"]
 
 [project.scripts]
 commitizen-early = "git_a_grip.commitizen_early:main_cli"
 bump-on-push = "git_a_grip.bump_on_push:main_cli"
+ruff-check-hook = "git_a_grip.ruff_hooks:check_cli"
+ruff-format-hook = "git_a_grip.ruff_hooks:format_cli"
+pytest-hook = "git_a_grip.pytest_hook:main_cli"
 
 [project.urls]
 Homepage = "https://github.com/dannybrown37/git-a-grip"

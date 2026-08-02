@@ -9,6 +9,37 @@
   always_run: true
   pass_filenames: false
 
+- id: ruff-check
+  name: Ruff check
+  description: >-
+    Lint with `ruff check --fix`, re-staging the files it fixed so the fix is
+    part of the commit rather than left dirty in the working tree.
+  entry: ruff-check-hook
+  language: python
+  types: [python]
+  # Both ruff hooks call `git add`; running them in parallel races index.lock.
+  require_serial: true
+
+- id: ruff-format
+  name: Ruff format
+  description: >-
+    Format with `ruff format`, re-staging the files it rewrote.
+  entry: ruff-format-hook
+  language: python
+  types: [python]
+  require_serial: true
+
+- id: pytest
+  name: Tests
+  description: >-
+    Run the consuming repo's test suite from the repo root, through a runner
+    that resolves the project's own environment (`uv run pytest` by default,
+    override with `--runner=...`).
+  entry: pytest-hook
+  language: python
+  files: ^(src/|tests/).*
+  pass_filenames: false
+
 - id: bump-on-push
   name: Bump version and push
   description: >-
