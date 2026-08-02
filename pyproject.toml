@@ -9,7 +9,7 @@ readme = "README.md"
 # A real dependency rather than something consumers pass via
 # `additional_dependencies`. pre-commit builds this repo an isolated env, so
 # every hook here reaches commitizen the same way no matter how the consuming
-# repo happens to install it -- which is the whole reason this repo exists.
+# repo happens to install it
 dependencies = ["commitizen>=4.0", "ruff>=0.6"]
 
 [project.scripts]
