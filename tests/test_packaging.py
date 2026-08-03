@@ -72,7 +72,7 @@ def test_every_gag_subcommand_is_reachable() -> None:
     # would break `gag` for every command, not just its own.
     from git_a_grip import cli
 
-    assert set(cli.COMMANDS) == {'audit', 'sync', 'release'}
+    assert set(cli.COMMANDS) == {'hooks', 'audit', 'sync', 'release'}
 
 
 def test_base_dependencies_carry_no_hook_only_tools() -> None:
@@ -109,3 +109,36 @@ def test_non_ruff_hooks_need_no_extra_dependencies() -> None:
     assert others
     for hook in others:
         assert 'additional_dependencies' not in hook
+
+
+def _squashed(text: str) -> str:
+    return ' '.join(text.split())
+
+
+def test_every_hook_is_documented_by_gag_hooks() -> None:
+    # `gag hooks` is the only place a person can read what a hook does --
+    # the hooks have no console scripts and `gag --help` lists commands. A
+    # hook missing from DOCS is one nobody can find.
+    from git_a_grip import hook_docs
+
+    assert set(hook_docs.DOCS) == {hook['id'] for hook in HOOKS}
+
+
+def test_the_documented_prose_matches_the_hook_metadata() -> None:
+    # DOCS is a second copy of the yaml, because the yaml is not shipped in
+    # the wheel. Copies drift; this is what stops it.
+    from git_a_grip import hook_docs
+
+    for hook in HOOKS:
+        doc = hook_docs.DOCS[hook['id']]
+
+        assert doc.name == hook['name']
+        assert _squashed(doc.description) == _squashed(hook['description'])
+
+
+def test_every_documented_config_block_names_its_own_hook() -> None:
+    # A copy-pasted block that turns on some other hook is worse than none.
+    from git_a_grip import hook_docs
+
+    for hook_id, doc in hook_docs.DOCS.items():
+        assert doc.config[0] == f'- id: {hook_id}'

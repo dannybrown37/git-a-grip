@@ -25,6 +25,28 @@ package, while ruff is declared by the two ruff hooks themselves, through
 nothing. Pin your own ruff by setting `additional_dependencies:
 [ruff==x.y.z]` on the hook.
 
+## `gag hooks` (command, not a hook)
+
+The index of the hooks, from an install — the sections below, minus the repo:
+
+```bash
+uvx --from git-a-grip gag hooks         # one line per hook
+uvx --from git-a-grip gag hooks pytest  # that one, in full
+uvx --from git-a-grip gag hooks --all   # all of them, in full
+```
+
+Bare, it is a list: the paste-ready `repos:` block with the `rev:` you have
+installed, then one line per hook. Name a hook and you get the whole entry —
+what it does, the `.pre-commit-config.yaml` block that turns it on, and the
+`python -m git_a_grip.hooks <id>` line that runs it by hand outside
+pre-commit.
+
+Hook ids are bold and the pasteable parts cyan when stdout is a terminal;
+piping, redirecting, `NO_COLOR` or `TERM=dumb` each turn that off, so
+`gag hooks --all | less` and `gag hooks | grep tsc` get clean text. Nothing
+here *runs* a hook: the hooks are pre-commit entry points, and `gag` stays
+the commands.
+
 ## `commitizen-early` (pre-commit stage)
 
 Rejects a non-conventional commit message in about a third of a second,
@@ -319,6 +341,7 @@ git-a-grip/
 |       |-- cli.py
 |       |-- commitizen_early.py
 |       |-- cz.py
+|       |-- hook_docs.py
 |       |-- hooks.py
 |       |-- node_hooks.py
 |       |-- pytest_hook.py
@@ -332,6 +355,7 @@ git-a-grip/
 |   |-- test_audit.py
 |   |-- test_cli.py
 |   |-- test_commitizen_early.py
+|   |-- test_hook_docs.py
 |   |-- test_hooks.py
 |   |-- test_node_hooks.py
 |   |-- test_packaging.py

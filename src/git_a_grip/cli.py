@@ -11,11 +11,15 @@ from __future__ import annotations
 import sys
 from collections.abc import Callable
 
-from git_a_grip import audit, release, sync, version
+from git_a_grip import audit, hook_docs, release, sync, version
 
 Command = Callable[[list[str]], int]
 
 COMMANDS: dict[str, tuple[Command, str]] = {
+    'hooks': (
+        hook_docs.main,
+        'Document the pre-commit hooks and how to turn each one on.',
+    ),
     'audit': (
         audit.main,
         'Report which local repos use these hooks, and at what rev.',
