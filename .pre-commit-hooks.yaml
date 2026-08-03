@@ -35,13 +35,26 @@
   additional_dependencies: [ruff>=0.6]
   require_serial: true
 
-- id: readme-tree
+- id: embed-tree
   name: README file tree
   description: >-
     Regenerate the file tree between the `<!-- tree:start -->` markers in the
     README from `git ls-files`, and re-stage it.
-  entry: python -m git_a_grip.hooks readme-tree
+  entry: python -m git_a_grip.hooks embed-tree
   language: python
+  always_run: true
+  pass_filenames: false
+
+- id: embed-command
+  name: Embedded command output
+  description: >-
+    Run the command named in `args` and keep its output -- `--help`, `make
+    help` -- between that block's markers in the README, re-staging it.
+  entry: python -m git_a_grip.hooks embed-command
+  language: python
+  # always_run because the default has no way to know what changes the output.
+  # Scope it in your own config: a subprocess on every commit, for a block that
+  # moves twice a year, is the kind of tax that gets a hook removed.
   always_run: true
   pass_filenames: false
 

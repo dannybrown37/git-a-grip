@@ -19,7 +19,7 @@ repos:
       - id: commitizen-early
       - id: ruff-check
       - id: ruff-format
-      - id: readme-tree
+      - id: embed-tree
       - id: pytest
         args: [tests/, -q]
 ```
@@ -35,7 +35,8 @@ they must run inside *your* project's environment, so they shell out to
 | `ruff-check` | `ruff check --fix`, with fixes **re-staged** — no dirty tree to `git add` and amend. |
 | `ruff-format` | `ruff format`, likewise re-staged. |
 | `pytest` | Your test suite, from the repo root, in your project's env. `args: ['--runner=uv run --extra api pytest', ...]` to change the runner. |
-| `readme-tree` | Keeps a file tree in your README true. Drop `<!-- tree:start -->` / `<!-- tree:end -->` in, and it regenerates and re-stages on every commit. Contents come from `git ls-files`, so it's exactly what's committed. |
+| `embed-tree` | Keeps a file tree in your README true. Drop `<!-- tree:start -->` / `<!-- tree:end -->` in, and it regenerates and re-stages on every commit. Contents come from `git ls-files`, so it's exactly what's committed. (Was `readme-tree`; the old id still works.) |
+| `embed-command` | Keeps a command's output — `mytool --help`, `make help` — true in your README. Name the command in `args`; nothing is discovered and run on its own. |
 | `eslint` | `eslint --fix`, re-staged, `--max-warnings=0` by default so warnings can't pile up forever. |
 | `tsc` | Type-checks *the project*, never bare filenames — given filenames, tsc silently ignores your `tsconfig.json`. |
 
@@ -106,7 +107,36 @@ non-fast-forward. As a command, the bump simply happens first.)
 ### `gag hooks` — the hook reference
 
 The table above, in full, from your installed version. Colorized for the
-terminal, plain when piped.
+terminal, plain when piped. The block below is this repo's own `embed-command`
+hook keeping `gag hooks` output honest:
+
+<!-- hooks:start -->
+
+```
+git-a-grip 0.5.0 -- pre-commit hooks
+
+Turn one on in .pre-commit-config.yaml:
+
+repos:
+  - repo: https://github.com/dannybrown37/git-a-grip
+    rev: v0.5.0
+    hooks:
+      - id: <one of the below>
+      - id: <...any number of others>
+
+  commitizen-early  Reject a bad commit message before the slow hooks run.
+  ruff-check        Lint with `ruff check --fix`, re-staging what it fixed.
+  ruff-format       Format with `ruff format`, re-staging what it rewrote.
+  embed-tree        Regenerate the README file tree, and re-stage it.
+  embed-command     Keep a command's output (`--help`) true in the README.
+  eslint            Lint with the project's own eslint, re-staging fixes.
+  tsc               Type-check the project with the project's own tsc.
+  pytest            Run the repo's tests through its own environment.
+
+gag hooks <id> for one in full, gag hooks --all for all of them.
+```
+
+<!-- hooks:end -->
 
 ---
 
@@ -132,7 +162,7 @@ proofs pass, `cz bump` tags it and `publish.yml` uploads to PyPI. Nothing is
 tagged before the checks pass.
 
 This repo eats its own dog food — its hooks run on itself, and the tree below
-is maintained by `readme-tree`.
+is maintained by `embed-tree`.
 
 <!-- tree:start -->
 
@@ -149,11 +179,13 @@ git-a-grip/
 |       |-- cli.py
 |       |-- commitizen_early.py
 |       |-- cz.py
+|       |-- doc_block.py
+|       |-- embed_command.py
+|       |-- embed_tree.py
 |       |-- hook_docs.py
 |       |-- hooks.py
 |       |-- node_hooks.py
 |       |-- pytest_hook.py
-|       |-- readme_tree.py
 |       |-- release.py
 |       |-- restage.py
 |       |-- ruff_hooks.py
@@ -163,12 +195,14 @@ git-a-grip/
 |   |-- test_audit.py
 |   |-- test_cli.py
 |   |-- test_commitizen_early.py
+|   |-- test_doc_block.py
+|   |-- test_embed_command.py
+|   |-- test_embed_tree.py
 |   |-- test_hook_docs.py
 |   |-- test_hooks.py
 |   |-- test_node_hooks.py
 |   |-- test_packaging.py
 |   |-- test_pytest_hook.py
-|   |-- test_readme_tree.py
 |   |-- test_release.py
 |   |-- test_restage.py
 |   |-- test_ruff_hooks.py

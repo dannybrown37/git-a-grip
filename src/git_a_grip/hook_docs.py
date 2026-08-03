@@ -88,17 +88,40 @@ DOCS: dict[str, HookDoc] = {
         ),
         config=['- id: ruff-format'],
     ),
-    'readme-tree': HookDoc(
+    'embed-tree': HookDoc(
         name='README file tree',
         summary='Regenerate the README file tree, and re-stage it.',
         description=(
             'Regenerate the file tree between the `<!-- tree:start -->` '
             'markers in the README from `git ls-files`, and re-stage it.'
         ),
-        config=['- id: readme-tree', '  args: [--depth=3]  # optional'],
+        config=['- id: embed-tree', '  args: [--depth=3]  # optional'],
         notes=(
             'Does nothing until the README has both markers. `--depth=N` '
-            'truncates below N levels (default: unlimited).'
+            'truncates below N levels (default: unlimited). Was `readme-tree` '
+            'before 0.6; the old id still dispatches.'
+        ),
+    ),
+    'embed-command': HookDoc(
+        name='Embedded command output',
+        summary="Keep a command's output (`--help`) true in the README.",
+        description=(
+            'Run the command named in `args` and keep its output -- '
+            "`--help`, `make help` -- between that block's markers in the "
+            'README, re-staging it.'
+        ),
+        config=[
+            '- id: embed-command',
+            "  args: ['--marker=help', '--command=uv run mytool --help']",
+            '  files: ^(src/.*\\.py|README\\.md)$  # scope it yourself',
+        ],
+        notes=(
+            'Runs only the command you write down -- nothing is discovered. '
+            'One entry per block, each with its own `--marker`; the markers '
+            'are `<!-- help:start -->` / `<!-- help:end -->` for '
+            '`--marker=help`. A command that exits non-zero fails the commit '
+            'rather than pasting its error into the README: pass '
+            '`--exit=N` when that status is normal for it.'
         ),
     ),
     'eslint': HookDoc(

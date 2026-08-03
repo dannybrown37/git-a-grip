@@ -61,6 +61,29 @@ def test_no_hook_dispatches_to_nothing() -> None:
     assert set(hooks.HOOKS) == entries
 
 
+def test_every_alias_points_at_a_live_hook() -> None:
+    # An alias is a promise to a consumer whose pinned config still says the
+    # old id. One that dispatches nowhere breaks exactly the commit it was
+    # added to protect.
+    from git_a_grip import hooks
+
+    for old, current in hooks.ALIASES.items():
+        assert current in hooks.HOOKS
+        assert old not in hooks.HOOKS
+
+
+def test_no_alias_is_offered_as_a_current_hook() -> None:
+    # Aliases are for old configs, not for new ones: they must not appear in
+    # `.pre-commit-hooks.yaml` or `gag hooks`, or people will keep adopting a
+    # name that is on its way out.
+    from git_a_grip import hook_docs, hooks
+
+    ids = {hook['id'] for hook in HOOKS}
+
+    assert ids.isdisjoint(hooks.ALIASES)
+    assert set(hook_docs.DOCS).isdisjoint(hooks.ALIASES)
+
+
 def test_the_gag_scripts_are_the_same_entry_point() -> None:
     scripts = PYPROJECT['project']['scripts']
 

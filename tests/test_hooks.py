@@ -46,6 +46,21 @@ def test_the_rest_of_the_argv_reaches_the_hook(
     assert seen == [['tests/', '-q']]
 
 
+def test_an_old_id_still_runs_and_says_so(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    # A consumer pins a rev, so their config outlives the rename. The old id
+    # has to keep working, and has to tell them it moved.
+    monkeypatch.setitem(hooks.HOOKS, 'embed-tree', lambda _argv: STUB_CODE)
+
+    assert hooks.main(['readme-tree']) == STUB_CODE
+
+    err = capsys.readouterr().err
+    assert 'readme-tree' in err
+    assert 'embed-tree' in err
+
+
 def test_ruff_check_always_gets_fix(monkeypatch: pytest.MonkeyPatch) -> None:
     # `--fix` is the whole point of the hook -- it is what makes it re-stage
     # rather than merely complain, so it cannot come from the consumer's args.

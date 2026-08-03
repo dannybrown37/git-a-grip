@@ -16,19 +16,27 @@ from __future__ import annotations
 import sys
 from collections.abc import Callable
 
-from git_a_grip import commitizen_early, node_hooks, pytest_hook
-from git_a_grip import readme_tree, ruff_hooks
+from git_a_grip import commitizen_early, embed_command, embed_tree
+from git_a_grip import node_hooks, pytest_hook, ruff_hooks
 
 Hook = Callable[[list[str]], int]
 
 HOOKS: dict[str, Hook] = {
     'commitizen-early': lambda _argv: commitizen_early.main(),
-    'readme-tree': readme_tree.main,
+    'embed-tree': embed_tree.main,
+    'embed-command': embed_command.main,
     'ruff-check': lambda argv: ruff_hooks.run('check', ['--fix', *argv]),
     'ruff-format': lambda argv: ruff_hooks.run('format', argv),
     'eslint': node_hooks.eslint,
     'tsc': node_hooks.tsc,
     'pytest': pytest_hook.main,
+}
+
+# Ids that shipped under an older name. A consuming repo pins a rev, so its
+# config outlives the rename; dispatching the old name costs one dict and
+# saves every consumer a broken commit on the day they bump.
+ALIASES: dict[str, str] = {
+    'readme-tree': 'embed-tree',
 }
 
 
@@ -44,6 +52,13 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     name, *rest = args
+    if name in ALIASES:
+        current = ALIASES[name]
+        sys.stderr.write(
+            f'git-a-grip: `{name}` is now `{current}`. Still runs; rename it '
+            'in .pre-commit-config.yaml when convenient.\n',
+        )
+        name = current
     hook = HOOKS.get(name)
     if hook is None:
         known = ', '.join(HOOKS)

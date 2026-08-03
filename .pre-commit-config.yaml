@@ -50,11 +50,24 @@ repos:
         types: [python]
         require_serial: true
 
-      - id: readme-tree
+      - id: embed-tree
         name: README file tree
-        entry: uv run python -m git_a_grip.hooks readme-tree
+        entry: uv run python -m git_a_grip.hooks embed-tree
         language: system
         always_run: true
+        pass_filenames: false
+
+      - id: embed-command
+        name: README hook reference
+        # The command is one argument: entry: is shlex-split, so an unquoted
+        # `--command=uv run gag hooks` would arrive as four.
+        entry: >-
+          uv run python -m git_a_grip.hooks embed-command
+          --marker=hooks "--command=uv run gag hooks"
+        language: system
+        # What the block is made of: the docs themselves, and the version
+        # the header prints.
+        files: ^(src/git_a_grip/(hook_docs|version)\.py|README\.md)$
         pass_filenames: false
 
       - id: tests
