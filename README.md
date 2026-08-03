@@ -20,6 +20,8 @@ repos:
       - id: ruff-check
       - id: ruff-format
       - id: embed-tree
+      - id: embed-command
+        args: ['--marker=help', '--command=mytool --help']
       - id: pytest
         args: [tests/, -q]
 ```
@@ -42,6 +44,11 @@ they must run inside *your* project's environment, so they shell out to
 
 Anything in `args` is passed through to the underlying tool. Pin your own
 tool version with `additional_dependencies: [ruff==0.16.1]`.
+
+The two `embed-*` hooks are the exception: their `args` configure the hook
+itself (`--marker=`, `--command=`, `--file=`, `--depth=`, `--exit=`). One
+entry per block, each with its own `--marker`. Scope them with `files:` so a
+block that changes twice a year isn't regenerated on every commit.
 
 Full details on any hook, including the paste-ready config block:
 
@@ -113,13 +120,13 @@ hook keeping `gag hooks` output honest:
 <!-- hooks:start -->
 
 ```
-git-a-grip 0.5.0 -- pre-commit hooks
+git-a-grip 0.5.1 -- pre-commit hooks
 
 Turn one on in .pre-commit-config.yaml:
 
 repos:
   - repo: https://github.com/dannybrown37/git-a-grip
-    rev: v0.5.0
+    rev: v0.5.1
     hooks:
       - id: <one of the below>
       - id: <...any number of others>
@@ -213,6 +220,7 @@ git-a-grip/
 |-- .pre-commit-hooks.yaml
 |-- .ruff.toml
 |-- CHANGELOG.md
+|-- CLAUDE.md
 |-- LICENSE
 |-- pyproject.toml
 |-- README.md
