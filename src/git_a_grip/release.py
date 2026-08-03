@@ -61,11 +61,11 @@ def _push(branch: str, *extra: str) -> int:
 
 
 USAGE = """\
-git-release -- bump the version, tag it, and push, in that order.
+gag release -- bump the version, tag it, and push, in that order.
 
-  git-release              on main: bump, tag and push; elsewhere: just push
-  git-release --any-branch release from the current branch, whatever it is
-  git-release --help       show this
+  gag release              on main: bump, tag and push; elsewhere: just push
+  gag release --any-branch release from the current branch, whatever it is
+  gag release --help       show this
 
 Configure what the bump rewrites via [tool.commitizen] in the repo.
 """

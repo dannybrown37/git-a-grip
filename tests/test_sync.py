@@ -167,4 +167,4 @@ def test_missing_directory_refuses(
 
 def test_help_exits_zero(capsys: pytest.CaptureFixture[str]) -> None:
     assert sync.main(['--help']) == 0
-    assert 'hook-sync' in capsys.readouterr().out
+    assert 'gag sync' in capsys.readouterr().out

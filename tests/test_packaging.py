@@ -38,6 +38,30 @@ def test_every_hook_entry_is_a_console_script() -> None:
     assert entries <= scripts
 
 
+def test_hook_entries_are_the_only_non_gag_scripts() -> None:
+    # Two namespaces, no third: `gag`/`git-a-grip` are what a person types,
+    # everything else exists because a hook's `entry:` names it. A command
+    # that leaks out as its own script is one nobody finds via `gag --help`.
+    scripts = set(PYPROJECT['project']['scripts'])
+    entries = {hook['entry'] for hook in HOOKS}
+
+    assert scripts - entries == {'gag', 'git-a-grip'}
+
+
+def test_the_gag_scripts_are_the_same_entry_point() -> None:
+    scripts = PYPROJECT['project']['scripts']
+
+    assert scripts['gag'] == scripts['git-a-grip'] == 'git_a_grip.cli:main_cli'
+
+
+def test_every_gag_subcommand_is_reachable() -> None:
+    # Importing the dispatcher is the test: a subcommand whose module moved
+    # would break `gag` for every command, not just its own.
+    from git_a_grip import cli
+
+    assert set(cli.COMMANDS) == {'audit', 'sync', 'release'}
+
+
 def test_base_dependencies_carry_no_hook_only_tools() -> None:
     names = _requirement_names(PYPROJECT['project']['dependencies'])
 
@@ -45,7 +69,7 @@ def test_base_dependencies_carry_no_hook_only_tools() -> None:
 
 
 def test_commands_can_import_what_they_need() -> None:
-    # commitizen for git-release, pyyaml for pre-commit-audit: these two are
+    # commitizen for `gag release`, pyyaml for `gag audit`: these two are
     # imported by commands, so they belong in the base install.
     names = _requirement_names(PYPROJECT['project']['dependencies'])
 

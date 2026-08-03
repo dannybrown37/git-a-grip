@@ -5,9 +5,9 @@ the repos on this machine, which of *this* repo's hooks are actually in use
 and at what rev, what other third-party hooks have accumulated, and which
 `repo: local` hooks exist only in one project and nowhere else.
 
-    pre-commit-audit                 audit the sibling repos of this one
-    pre-commit-audit ~/projects ~/wk audit those trees instead
-    pre-commit-audit --json          the same data, machine-readable
+    gag audit                 audit the sibling repos of this one
+    gag audit ~/projects ~/wk audit those trees instead
+    gag audit --json          the same data, machine-readable
 
 Repos with no config at all are listed too -- an unhooked repo is a finding,
 not an absence of one.
@@ -41,11 +41,11 @@ _PRUNED = {
 }
 
 USAGE = """\
-pre-commit-audit -- audit the pre-commit hooks of every local repo.
+gag audit -- audit the pre-commit hooks of every local repo.
 
-  pre-commit-audit [PATH ...]  trees to scan (default: this repo's parent)
-  pre-commit-audit --json      emit JSON instead of a report
-  pre-commit-audit --help      show this
+  gag audit [PATH ...]  trees to scan (default: this repo's parent)
+  gag audit --json      emit JSON instead of a report
+  gag audit --help      show this
 """
 
 

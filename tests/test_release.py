@@ -134,7 +134,7 @@ def test_help_prints_usage_without_releasing(
 
     assert release.main(['--help']) == 0
     assert log == []
-    assert 'git-release' in capsys.readouterr().out
+    assert 'gag release' in capsys.readouterr().out
 
 
 def test_unknown_argument_refuses_to_release(

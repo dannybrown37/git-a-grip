@@ -1,16 +1,16 @@
 """Pin every local repo's hooks to one version, in one command.
 
-`pre-commit-audit` ends with a list of repos pinning four different revs of
+`gag audit` ends with a list of repos pinning four different revs of
 this package, and no way to act on it. Fixing that by hand is a `cd`, an
 edit and a `git commit` per repo -- so it does not get done, and the fleet
 drifts until a hook changes behaviour and only some repos notice.
 
-    hook-sync                    show what would change (default: dry run)
-    hook-sync --write            rewrite the configs
-    hook-sync --to v0.4.0        pin to a version other than the installed
-    hook-sync --repo URL         sync some other hook source instead
-    hook-sync --latest           take the target from the source's git tags
-    hook-sync ~/projects ~/work  trees to scan (default: this repo's parent)
+    gag sync                    show what would change (default: dry run)
+    gag sync --write            rewrite the configs
+    gag sync --to v0.4.0        pin to a version other than the installed
+    gag sync --repo URL         sync some other hook source instead
+    gag sync --latest           take the target from the source's git tags
+    gag sync ~/projects ~/work  trees to scan (default: this repo's parent)
 
 The rewrite is textual, not a YAML round-trip: `yaml.safe_load` loses the
 comments and the key order a hand-written config is full of, and handing
@@ -30,14 +30,14 @@ from pathlib import Path
 from git_a_grip import audit, version
 
 USAGE = """\
-hook-sync -- pin one hook source to one rev across every local repo.
+gag sync -- pin one hook source to one rev across every local repo.
 
-  hook-sync [PATH ...]     trees to scan (default: this repo's parent)
-  hook-sync --write        apply the changes (default is a dry run)
-  hook-sync --to REV       target rev (default: the installed version)
-  hook-sync --repo URL     hook source to sync (default: git-a-grip)
-  hook-sync --latest       resolve the target from the source's git tags
-  hook-sync --help         show this
+  gag sync [PATH ...]     trees to scan (default: this repo's parent)
+  gag sync --write        apply the changes (default is a dry run)
+  gag sync --to REV       target rev (default: the installed version)
+  gag sync --repo URL     hook source to sync (default: git-a-grip)
+  gag sync --latest       resolve the target from the source's git tags
+  gag sync --help         show this
 """
 
 # `  - repo: https://github.com/...` followed, within the block, by `rev:`.

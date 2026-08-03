@@ -18,8 +18,8 @@ classifiers = [
 ]
 
 # What the *commands* need, and nothing else -- this is what a person gets
-# from `uv tool install git-a-grip`. commitizen for `git-release`, pyyaml for
-# `pre-commit-audit`.
+# from `uv tool install git-a-grip`. commitizen for `gag release`, pyyaml for
+# `gag audit`.
 #
 # Hook-only tools are deliberately absent: pre-commit builds each hook its own
 # env, so `.pre-commit-hooks.yaml` declares them per hook via
@@ -34,10 +34,16 @@ dependencies = ["commitizen>=4.0", "pyyaml>=6.0"]
 hooks = ["ruff>=0.6"]
 
 [project.scripts]
-commitizen-early = "git_a_grip.commitizen_early:main_cli"
-pre-commit-audit = "git_a_grip.audit:main_cli"
-git-release = "git_a_grip.release:main_cli"
-hook-sync = "git_a_grip.sync:main_cli"
+# Typed by a person. One namespace, so `gag --help` is the whole surface of
+# the tool; every subcommand lives in `git_a_grip.cli:COMMANDS`.
+gag = "git_a_grip.cli:main_cli"
+git-a-grip = "git_a_grip.cli:main_cli"
+
+# Typed by nobody. These exist only because `.pre-commit-hooks.yaml` names
+# them in an `entry:`, and pre-commit resolves an entry through the console
+# scripts of the env it builds. tests/test_packaging.py asserts every hook
+# entry is one of these, and that these are the *only* `-hook` scripts.
+commitizen-early-hook = "git_a_grip.commitizen_early:main_cli"
 readme-tree-hook = "git_a_grip.readme_tree:main_cli"
 eslint-hook = "git_a_grip.node_hooks:eslint_cli"
 tsc-hook = "git_a_grip.node_hooks:tsc_cli"

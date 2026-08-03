@@ -149,7 +149,7 @@ def test_missing_directory_refuses(
 
 def test_help_exits_zero(capsys: pytest.CaptureFixture[str]) -> None:
     assert audit.main(['--help']) == 0
-    assert 'pre-commit-audit' in capsys.readouterr().out
+    assert 'gag audit' in capsys.readouterr().out
 
 
 def test_report_leads_with_the_installed_version(tmp_path: Path) -> None:

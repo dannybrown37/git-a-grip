@@ -1,8 +1,8 @@
 """The installed version of this package, and how a repo pins it.
 
-Two audiences need this string. `pre-commit-audit` prints it so the versions
+Two audiences need this string. `gag audit` prints it so the versions
 it found in other repos have something to be compared *against*, and
-`hook-sync` writes it into those repos' configs. Both would otherwise have to
+`gag sync` writes it into those repos' configs. Both would otherwise have to
 re-read `pyproject.toml`, which is not shipped in the wheel.
 
 The tag format is commitizen's (`tag_format = "v$version"` in pyproject), so
@@ -63,7 +63,7 @@ def compare(left: str, right: str) -> int:
 
     Only the leading numeric components are compared. A rev this cannot
     parse -- a branch name, a sha, an empty string -- compares as older than
-    anything numeric, which is the answer that makes `hook-sync` offer to
+    anything numeric, which is the answer that makes `gag sync` offer to
     pin it.
     """
     first, second = parts(left), parts(right)

@@ -56,14 +56,14 @@ defers whenever it finds no message:
 Put it first and give it `fail_fast: true` if you want it to short-circuit
 the rest of the stage.
 
-## `git-release` (command, not a hook)
+## `gag release` (command, not a hook)
 
 Bump, tag and push, in that order, exiting 0. For repos that release from a
 laptop rather than from CI. Give it an alias that says what it does — not
 `gp`, which reads as `git push` right up until it publishes something:
 
 ```bash
-alias release='uvx --from git-a-grip git-release'
+alias release='uvx --from git-a-grip gag release'
 ```
 
 This repo itself no longer uses it: releases here are cut by CI once the
@@ -186,13 +186,13 @@ ignores `tsconfig.json` entirely and type-checks with default options, so the
 obvious `entry: tsc --noEmit` hook quietly checks something other than your
 project. This one type-checks the project (`-p .` unless you name another).
 
-## `pre-commit-audit` (command, not a hook)
+## `gag audit` (command, not a hook)
 
 Audit every local repo's pre-commit setup at once, so a hook that drifted or
 never got installed shows up as a line rather than a surprise:
 
 ```bash
-uvx --from git-a-grip pre-commit-audit
+uvx --from git-a-grip gag audit
 ```
 
 It walks the given trees (default: this repo's sibling directories), stops at
@@ -220,21 +220,21 @@ git-a-grip hooks in use
 `--json` emits the same data as `{"version": ..., "repos": [...]}`:
 
 ```bash
-pre-commit-audit ~/projects ~/work
-pre-commit-audit --json | jq '.repos[] | select(.hooks == [])'
+gag audit ~/projects ~/work
+gag audit --json | jq '.repos[] | select(.hooks == [])'
 ```
 
-## `hook-sync` (command, not a hook)
+## `gag sync` (command, not a hook)
 
 The other half of the audit: having found five repos on four different revs,
 pin them all to one.
 
 ```bash
-hook-sync                    # dry run against the installed version
-hook-sync --write            # apply it
-hook-sync --to v0.4.0        # some other target
-hook-sync --latest --write   # whatever the source's newest tag is
-hook-sync --repo https://github.com/gitleaks/gitleaks --latest
+gag sync                    # dry run against the installed version
+gag sync --write            # apply it
+gag sync --to v0.4.0        # some other target
+gag sync --latest --write   # whatever the source's newest tag is
+gag sync --repo https://github.com/gitleaks/gitleaks --latest
 ```
 
 It is a dry run by default and prints one line per repo (`old -> new`). The
@@ -250,13 +250,18 @@ you to review, `git add` and commit yourself.
 ## Installing the commands
 
 The hooks need no installation — pre-commit builds this repo an isolated env
-from the `rev` you pin. The three commands (`git-release`, `pre-commit-audit`,
-`hook-sync`) are ordinary console scripts, published to PyPI:
+from the `rev` you pin. The commands live behind one console script, `gag`
+(aliased as `git-a-grip`), published to PyPI:
 
 ```bash
-uvx --from git-a-grip pre-commit-audit    # one-off
-uv tool install git-a-grip                # both commands, on PATH
+uvx --from git-a-grip gag audit    # one-off
+uv tool install git-a-grip         # `gag` on PATH
 ```
+
+`gag --help` lists every subcommand, and `gag <command> --help` its options.
+The hook entry points are deliberately *not* commands: pre-commit resolves
+them from `.pre-commit-hooks.yaml`, and nothing but a hook should be typing
+them.
 
 That install carries only what the commands import — commitizen and pyyaml —
 not the ruff the hooks use. To run the hook entry points by hand as well, ask
@@ -270,7 +275,7 @@ Straight from a tag works too, and is the way to run something not yet
 released:
 
 ```bash
-uvx --from git+https://github.com/dannybrown37/git-a-grip@v0.3.1 git-release
+uvx --from git+https://github.com/dannybrown37/git-a-grip@v0.3.1 gag release
 ```
 
 ## Releasing
@@ -308,6 +313,7 @@ git-a-grip/
 |   `-- git_a_grip/
 |       |-- __init__.py
 |       |-- audit.py
+|       |-- cli.py
 |       |-- commitizen_early.py
 |       |-- cz.py
 |       |-- node_hooks.py
@@ -320,6 +326,7 @@ git-a-grip/
 |       `-- version.py
 |-- tests/
 |   |-- test_audit.py
+|   |-- test_cli.py
 |   |-- test_commitizen_early.py
 |   |-- test_node_hooks.py
 |   |-- test_packaging.py

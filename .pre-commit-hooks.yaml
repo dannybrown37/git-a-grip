@@ -3,7 +3,7 @@
   description: >-
     Reject a non-conventional commit message during the pre-commit stage,
     before the slow hooks run, by recovering it from git's argv.
-  entry: commitizen-early
+  entry: commitizen-early-hook
   language: python
   stages: [pre-commit]
   always_run: true
