@@ -11,7 +11,7 @@ from __future__ import annotations
 import sys
 from collections.abc import Callable
 
-from git_a_grip import audit, hook_docs, release, sync, version
+from git_a_grip import audit, hook_docs, sync, version
 
 Command = Callable[[list[str]], int]
 
@@ -27,10 +27,6 @@ COMMANDS: dict[str, tuple[Command, str]] = {
     'sync': (
         sync.main,
         'Move every local repo onto one rev of these hooks.',
-    ),
-    'release': (
-        release.main,
-        'Bump the version, tag it, and push.',
     ),
 }
 

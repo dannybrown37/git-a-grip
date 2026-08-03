@@ -114,7 +114,7 @@ def test_every_gag_subcommand_is_reachable() -> None:
     # would break `gag` for every command, not just its own.
     from git_a_grip import cli
 
-    assert set(cli.COMMANDS) == {'hooks', 'audit', 'sync', 'release'}
+    assert set(cli.COMMANDS) == {'hooks', 'audit', 'sync'}
 
 
 def test_base_dependencies_carry_no_hook_only_tools() -> None:
@@ -124,8 +124,9 @@ def test_base_dependencies_carry_no_hook_only_tools() -> None:
 
 
 def test_commands_can_import_what_they_need() -> None:
-    # commitizen for `gag release`, pyyaml for `gag audit`: these two are
-    # imported by commands, so they belong in the base install.
+    # pyyaml for `gag audit`, and commitizen for the commitizen-early hook --
+    # which declares no additional_dependencies, so it resolves cz out of the
+    # base install like every other non-ruff hook.
     names = _requirement_names(PYPROJECT['project']['dependencies'])
 
     assert {'commitizen', 'pyyaml'} <= names

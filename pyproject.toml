@@ -1,7 +1,7 @@
 [project]
 name = "git-a-grip"
 version = "0.5.1"
-description = "Pre-commit hooks that fail fast on bad commit messages, re-stage what they fix, and run your tests -- plus a release command and a cross-repo hook audit."
+description = "Pre-commit hooks that fail fast on bad commit messages, re-stage what they fix, keep your docs true, and run your tests -- plus a cross-repo hook audit."
 requires-python = ">=3.11"
 authors = [{ name = "Danny Brown", email = "dannybrown37@gmail.com" }]
 readme = "README.md"
@@ -18,8 +18,9 @@ classifiers = [
 ]
 
 # What the *commands* need, and nothing else -- this is what a person gets
-# from `uv tool install git-a-grip`. commitizen for `gag release`, pyyaml for
-# `gag audit`.
+# from `uv tool install git-a-grip`. pyyaml for `gag audit`; commitizen for the
+# commitizen-early hook, which resolves it out of this install like every other
+# non-ruff hook.
 #
 # Hook-only tools are deliberately absent: pre-commit builds each hook its own
 # env, so `.pre-commit-hooks.yaml` declares them per hook via

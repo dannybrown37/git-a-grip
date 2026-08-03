@@ -96,21 +96,6 @@ The rewrite is textual and touches only the `rev:` line, so your comments and
 formatting survive. Nothing is committed — changes land in each repo's
 working tree for you to review.
 
-### `gag release` — bump, tag, push
-
-For repos that release from a laptop rather than from CI. On `main` it bumps
-and pushes; on any other branch it just pushes, so it can replace `git push`.
-Refuses to run on a dirty tree. Configure the bump via `[tool.commitizen]` in
-the target repo.
-
-```bash
-alias release='uvx --from git-a-grip gag release'
-```
-
-(A pre-push hook cannot do this: git picks the sha to push before hooks run,
-so a commit made during the hook is either cancelled or rejected as
-non-fast-forward. As a command, the bump simply happens first.)
-
 ### `gag hooks` — the hook reference
 
 The table above, in full, from your installed version. Colorized for the
@@ -193,7 +178,6 @@ git-a-grip/
 |       |-- hooks.py
 |       |-- node_hooks.py
 |       |-- pytest_hook.py
-|       |-- release.py
 |       |-- restage.py
 |       |-- ruff_hooks.py
 |       |-- sync.py
@@ -210,7 +194,6 @@ git-a-grip/
 |   |-- test_node_hooks.py
 |   |-- test_packaging.py
 |   |-- test_pytest_hook.py
-|   |-- test_release.py
 |   |-- test_restage.py
 |   |-- test_ruff_hooks.py
 |   |-- test_sync.py
