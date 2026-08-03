@@ -51,13 +51,22 @@ jobs:
           uv run --isolated --no-project --with dist/*.whl \
             gag audit --help
           uv run --isolated --no-project --with dist/*.whl \
-            gag release --help
+            gag sync --help
+          uv run --isolated --no-project --with dist/*.whl \
+            gag hooks --help
 
       # The hooks are the other half of the split. try-repo builds them from
       # .pre-commit-hooks.yaml in the isolated env a consumer would get, so
       # this fails if ruff stops arriving via additional_dependencies -- which
       # the repo's own config, using `language: system` locally, cannot catch.
+      # SKIP=embed-command because try-repo runs every hook with no args, and
+      # embed-command with no `--command` refuses to do anything -- correctly,
+      # since it runs only what a consumer names. Its behaviour under the args
+      # it is meant to have is covered by tests/test_embed_command.py and by
+      # this repo's own config in the step below.
       - name: Hooks install and run as a consumer would get them
+        env:
+          SKIP: embed-command
         run: uv run --with pre-commit pre-commit try-repo . --all-files
 
       - name: This repo's own config still passes

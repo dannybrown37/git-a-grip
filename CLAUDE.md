@@ -25,7 +25,22 @@ Changing a hook's *flags* or behaviour means revisiting 3 and 4 too: the
 interface, and they go stale the same way.
 
 For the `gag` commands, the equivalent set is `cli.COMMANDS`, the command
-module's docstring, and the README section for it.
+module's docstring, the README section for it, and the **wheel-proof step in
+`.github/workflows/ci.yml`**, which runs `gag <command> --help` per command
+out of a bare wheel.
+
+**`.github/workflows/ci.yml` is part of the checklist too**, and it is the one
+that bites — it fails after the push, not in the local run:
+
+- Adding or removing a command means editing the wheel-proof step's list.
+- `pre-commit try-repo . --all-files` runs *every* hook in
+  `.pre-commit-hooks.yaml` with **no args**. A hook that requires
+  configuration to do anything (`embed-command` needs `--command`) will fail
+  there, correctly. Add it to that step's `SKIP` and say why in a comment;
+  do not weaken the hook into silently passing when it is unconfigured.
+
+Before pushing anything that touches commands, hooks, or packaging, run what
+CI runs — `uv build` plus the two proof steps — not just `pytest`.
 
 ## Renaming a shipped id
 
