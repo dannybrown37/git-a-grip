@@ -138,6 +138,54 @@ which would otherwise point the runner at an environment holding none of your
 project's dependencies. Narrow when it runs with `files:` (default
 `^(src/|tests/).*`).
 
+## `readme-tree` (pre-commit stage)
+
+Keeps a file tree in your README true. Mark the spot once:
+
+```markdown
+<!-- tree:start -->
+<!-- tree:end -->
+```
+
+and the hook regenerates the block on every commit, re-staging the README so
+the commit that renamed the directory is the commit that fixed the docs. A
+hand-written tree is accurate exactly once; this one cannot be stale in a
+commit that passed.
+
+```yaml
+      - id: readme-tree
+        args: [--file=docs/layout.md, --depth=2, --marker=tree]
+```
+
+The contents come from `git ls-files`, so the tree is exactly what is
+committed — no `.venv`, no build output, and no second copy of your
+`.gitignore` rules to drift. `--depth=N` truncates below N levels
+(default: unlimited).
+
+## `eslint` and `tsc` (pre-commit stage)
+
+For the JS/TS repos. Both run through the *project's* package manager
+(detected from the lockfile: `pnpm`, `bun`, `yarn`, else `npx --no-install`;
+override with `--runner=...`), because lint rules and compiler plugins live
+in your `node_modules` and a second isolated copy of the tool would resolve
+none of them.
+
+```yaml
+      - id: eslint
+      - id: tsc
+        args: [-p, tsconfig.build.json]
+```
+
+`eslint` runs with `--fix` and re-stages what it rewrote, like the ruff
+hooks. It also defaults to `--max-warnings=0`: eslint exits 0 on warnings, so
+a rule set with warnings in it otherwise passes forever while the warnings
+pile up. Pass `--max-warnings=N` to loosen that on purpose.
+
+`tsc` never passes filenames — that is the trap. Given file arguments, tsc
+ignores `tsconfig.json` entirely and type-checks with default options, so the
+obvious `entry: tsc --noEmit` hook quietly checks something other than your
+project. This one type-checks the project (`-p .` unless you name another).
+
 ## `pre-commit-audit` (command, not a hook)
 
 Audit every local repo's pre-commit setup at once, so a hook that drifted or
@@ -151,18 +199,59 @@ It walks the given trees (default: this repo's sibling directories), stops at
 each git working tree, and reports four things: which of this repo's hooks
 each project uses and the `rev` it pins, third-party hooks grouped by source
 repo and rev, one-off `repo: local` hooks with their entry, and repos with no
-usable config at all. `--json` emits the same data unformatted.
+usable config at all.
+
+The report opens with the *installed* version of this package, and every pin
+below it is labelled against that version — `(behind)`, `(ahead)`,
+`(unpinned)` — so the list answers "who is stale" rather than leaving you to
+diff revs by eye:
+
+```
+git-a-grip 0.3.1 (installed)
+12 repos scanned, 9 with pre-commit hooks.
+
+git-a-grip hooks in use
+=======================
+  ruff-check
+    api                          v0.3.1
+    dotfiles                     v0.1.0        (behind)
+```
+
+`--json` emits the same data as `{"version": ..., "repos": [...]}`:
 
 ```bash
 pre-commit-audit ~/projects ~/work
-pre-commit-audit --json | jq '.[] | select(.hooks == [])'
+pre-commit-audit --json | jq '.repos[] | select(.hooks == [])'
 ```
+
+## `hook-sync` (command, not a hook)
+
+The other half of the audit: having found five repos on four different revs,
+pin them all to one.
+
+```bash
+hook-sync                    # dry run against the installed version
+hook-sync --write            # apply it
+hook-sync --to v0.4.0        # some other target
+hook-sync --latest --write   # whatever the source's newest tag is
+hook-sync --repo https://github.com/gitleaks/gitleaks --latest
+```
+
+It is a dry run by default and prints one line per repo (`old -> new`). The
+rewrite is textual and touches only the `rev:` line of the matching `repo:`
+block: a YAML round-trip would hand your config back reformatted and stripped
+of its comments, which is a much worse trade than the one line you asked to
+change. Trailing comments on the `rev:` line survive, and ssh/https/`.git`
+spellings of the same source all match.
+
+Nothing is committed — the changes land in the working tree of each repo for
+you to review, `git add` and commit yourself.
 
 ## Installing the commands
 
 The hooks need no installation — pre-commit builds this repo an isolated env
-from the `rev` you pin. The two commands (`git-release`, `pre-commit-audit`)
-are ordinary console scripts, published to PyPI:
+from the `rev` you pin. The three commands (`git-release`, `pre-commit-audit`,
+`hook-sync`) are ordinary console scripts, published to PyPI:
 
 ```bash
 uvx --from git-a-grip pre-commit-audit    # one-off
@@ -204,5 +293,52 @@ uv sync
 uv run pytest
 ```
 
-This repo eats its own dog food: both hooks are wired into its own
-`.pre-commit-config.yaml`.
+This repo eats its own dog food: its hooks are wired into its own
+`.pre-commit-config.yaml`, and the tree below is maintained by `readme-tree`.
+
+<!-- tree:start -->
+
+```
+git-a-grip/
+|-- .github/
+|   `-- workflows/
+|       |-- ci.yml
+|       `-- publish.yml
+|-- src/
+|   `-- git_a_grip/
+|       |-- __init__.py
+|       |-- audit.py
+|       |-- commitizen_early.py
+|       |-- cz.py
+|       |-- node_hooks.py
+|       |-- pytest_hook.py
+|       |-- readme_tree.py
+|       |-- release.py
+|       |-- restage.py
+|       |-- ruff_hooks.py
+|       |-- sync.py
+|       `-- version.py
+|-- tests/
+|   |-- test_audit.py
+|   |-- test_commitizen_early.py
+|   |-- test_node_hooks.py
+|   |-- test_packaging.py
+|   |-- test_pytest_hook.py
+|   |-- test_readme_tree.py
+|   |-- test_release.py
+|   |-- test_restage.py
+|   |-- test_ruff_hooks.py
+|   |-- test_sync.py
+|   `-- test_version.py
+|-- .gitignore
+|-- .pre-commit-config.yaml
+|-- .pre-commit-hooks.yaml
+|-- .ruff.toml
+|-- CHANGELOG.md
+|-- LICENSE
+|-- pyproject.toml
+|-- README.md
+`-- uv.lock
+```
+
+<!-- tree:end -->

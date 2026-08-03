@@ -35,6 +35,36 @@
   additional_dependencies: [ruff>=0.6]
   require_serial: true
 
+- id: readme-tree
+  name: README file tree
+  description: >-
+    Regenerate the file tree between the `<!-- tree:start -->` markers in the
+    README from `git ls-files`, and re-stage it.
+  entry: readme-tree-hook
+  language: python
+  always_run: true
+  pass_filenames: false
+
+- id: eslint
+  name: ESLint
+  description: >-
+    Lint with the project's own eslint (`--fix`, and `--max-warnings=0`
+    unless you say otherwise), re-staging the files it fixed.
+  entry: eslint-hook
+  language: python
+  types_or: [javascript, jsx, ts, tsx]
+  require_serial: true
+
+- id: tsc
+  name: TypeScript
+  description: >-
+    Type-check the project with the project's own tsc. Never passes
+    filenames -- tsc ignores tsconfig.json when it is given any.
+  entry: tsc-hook
+  language: python
+  types_or: [ts, tsx]
+  pass_filenames: false
+
 - id: pytest
   name: Tests
   description: >-

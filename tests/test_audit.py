@@ -125,7 +125,9 @@ def test_json_output_classifies_each_hook(
 
     assert code == 0
     payload = json.loads(capsys.readouterr().out)
-    alpha = next(entry for entry in payload if entry['name'] == 'alpha')
+    assert payload['version'] == audit.version.installed_version()
+    repos = payload['repos']
+    alpha = next(entry for entry in repos if entry['name'] == 'alpha')
     sources = {hook['id']: hook['source'] for hook in alpha['hooks']}
     assert sources == {
         'commitizen-early': 'self',
@@ -148,3 +150,19 @@ def test_missing_directory_refuses(
 def test_help_exits_zero(capsys: pytest.CaptureFixture[str]) -> None:
     assert audit.main(['--help']) == 0
     assert 'pre-commit-audit' in capsys.readouterr().out
+
+
+def test_report_leads_with_the_installed_version(tmp_path: Path) -> None:
+    audits = [audit.audit_repo(p) for p in audit.find_repos([_tree(tmp_path)])]
+
+    report = audit.render(audits)
+
+    assert report.splitlines()[0].startswith('git-a-grip ')
+    assert audit.version.installed_version() in report.splitlines()[0]
+
+
+def test_stale_pins_are_flagged_against_the_installed_version() -> None:
+    assert audit.rev_status('v0.1.0', '0.3.1') == 'behind'
+    assert audit.rev_status('v0.3.1', '0.3.1') == 'current'
+    assert audit.rev_status('v9.0.0', '0.3.1') == 'ahead'
+    assert audit.rev_status('', '0.3.1') == ''

@@ -25,8 +25,10 @@ from typing import Any
 
 import yaml
 
+from git_a_grip import version
+
 CONFIG_NAME = '.pre-commit-config.yaml'
-SELF_MARKER = 'git-a-grip'
+SELF_MARKER = version.DIST_NAME
 # Directories that never contain a repo we care about but do contain
 # thousands of files, including vendored copies of other repos' configs.
 _PRUNED = {
@@ -148,13 +150,25 @@ def _section(title: str, lines: list[str]) -> list[str]:
     return [title, '=' * len(title), *(lines or ['  (none)']), '']
 
 
-def _self_section(audits: list[RepoAudit]) -> list[str]:
+def rev_status(rev: str, current: str) -> str:
+    """Describe one pinned rev relative to the installed version."""
+    if not rev or current == version.UNKNOWN:
+        return ''
+    order = version.compare(rev, current)
+    if order == 0:
+        return 'current'
+    return 'behind' if order < 0 else 'ahead'
+
+
+def _self_section(audits: list[RepoAudit], current: str) -> list[str]:
     lines = []
     for hook_id, pairs in _group(audits, is_self).items():
         lines.append(f'  {hook_id}')
         for audit, use in sorted(pairs, key=lambda p: p[0].name):
             rev = use.rev or 'unpinned'
-            lines.append(f'    {audit.name:<28} {rev}')
+            status = rev_status(use.rev, current)
+            note = f'  ({status})' if status and status != 'current' else ''
+            lines.append(f'    {audit.name:<28} {rev:<12}{note}')
     return _section(f'{SELF_MARKER} hooks in use', lines)
 
 
@@ -201,14 +215,18 @@ def _gaps_section(audits: list[RepoAudit]) -> list[str]:
 def render(audits: list[RepoAudit]) -> str:
     """Render the whole audit as a plain-text report."""
     hooked = sum(1 for a in audits if a.uses)
+    current = version.installed_version()
+    # The installed version leads the report: every rev below is only
+    # meaningful next to the version they are being compared against.
     header = [
+        f'{SELF_MARKER} {current} (installed)',
         f'{len(audits)} repos scanned, {hooked} with pre-commit hooks.',
         '',
     ]
     return '\n'.join(
         [
             *header,
-            *_self_section(audits),
+            *_self_section(audits, current),
             *_third_party_section(audits),
             *_local_section(audits),
             *_gaps_section(audits),
@@ -217,35 +235,42 @@ def render(audits: list[RepoAudit]) -> str:
 
 
 def as_json(audits: list[RepoAudit]) -> str:
-    """Render the whole audit as JSON."""
-    return json.dumps(
-        [
-            {
-                'path': str(a.path),
-                'name': a.name,
-                'has_config': a.has_config,
-                'error': a.error,
-                'hooks': [
-                    {
-                        'repo': u.repo,
-                        'rev': u.rev,
-                        'id': u.hook_id,
-                        'entry': u.entry,
-                        'source': (
-                            'self'
-                            if is_self(u)
-                            else 'local'
-                            if is_local(u)
-                            else 'third-party'
-                        ),
-                    }
-                    for u in a.uses
-                ],
-            }
-            for a in audits
-        ],
-        indent=2,
-    )
+    """Render the whole audit as JSON.
+
+    The installed version is part of the payload for the same reason it
+    heads the text report: a consumer comparing revs needs the thing they
+    are compared to.
+    """
+    current = version.installed_version()
+    repos = [
+        {
+            'path': str(a.path),
+            'name': a.name,
+            'has_config': a.has_config,
+            'error': a.error,
+            'hooks': [
+                {
+                    'repo': u.repo,
+                    'rev': u.rev,
+                    'id': u.hook_id,
+                    'entry': u.entry,
+                    'source': (
+                        'self'
+                        if is_self(u)
+                        else 'local'
+                        if is_local(u)
+                        else 'third-party'
+                    ),
+                    'status': (
+                        rev_status(u.rev, current) if is_self(u) else ''
+                    ),
+                }
+                for u in a.uses
+            ],
+        }
+        for a in audits
+    ]
+    return json.dumps({'version': current, 'repos': repos}, indent=2)
 
 
 def default_roots() -> list[Path]:

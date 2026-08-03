@@ -50,6 +50,13 @@ repos:
         types: [python]
         require_serial: true
 
+      - id: readme-tree
+        name: README file tree
+        entry: uv run readme-tree-hook
+        language: system
+        always_run: true
+        pass_filenames: false
+
       - id: tests
         name: Tests
         entry: uv run pytest-hook tests/ -q
