@@ -1,3 +1,9 @@
+## v0.5.1 (2026-08-03)
+
+### Fix
+
+- don't install hooks when we pip install this package, they're distinct things
+
 ## v0.5.0 (2026-08-03)
 
 ### Feat
