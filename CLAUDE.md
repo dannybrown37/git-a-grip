@@ -72,7 +72,15 @@ uv run pre-commit run --all-files
 ## Releases — hands off
 
 `cz bump` and CI own `CHANGELOG.md`, the version in `pyproject.toml`, and the
-tags. Never edit those by hand. Conventional commit messages are required (the
+tags. Never edit those by hand.
+
+**A version string in the docs is commitizen's job, not a hook's.** The bump
+runs in CI, in a commit no pre-commit hook ever sees, and that commit is the
+one the tag lands on — so a hook would leave every *released* doc a version
+behind, stale in precisely the copy people paste. Add the file to
+`[tool.commitizen] version_files` instead, and let
+`test_the_readme_pins_the_version_this_repo_actually_is` notice if it stops
+matching. The same reasoning rules out an `embed-version` hook. Conventional commit messages are required (the
 `commitizen-early` hook rejects the rest before anything slow runs).
 
 ## Gotchas found the hard way

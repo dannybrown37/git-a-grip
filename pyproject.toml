@@ -67,3 +67,10 @@ major_version_zero = true
 update_changelog_on_bump = true
 annotated_tag = true
 version_provider = "pep621"
+# The rev a reader copies out of the README has to be the rev that exists.
+# This is commitizen's job rather than a pre-commit hook's: `cz bump` runs in
+# CI, in a commit no hook ever sees, and *that* commit is the one the tag
+# lands on. A hook would leave every released README a version behind --
+# stale in exactly the copy people paste. `version_files` rewrites it inside
+# the bump commit instead. tests/test_packaging.py asserts it stayed true.
+version_files = ["README.md:rev: v"]

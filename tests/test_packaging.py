@@ -10,6 +10,7 @@ means the two ways of running the same code run different ruffs.
 
 from __future__ import annotations
 
+import re
 import tomllib
 from pathlib import Path
 
@@ -59,6 +60,24 @@ def test_no_hook_dispatches_to_nothing() -> None:
     entries = {hook['entry'].rsplit(' ', 1)[1] for hook in HOOKS}
 
     assert set(hooks.HOOKS) == entries
+
+
+def test_the_readme_pins_the_version_this_repo_actually_is() -> None:
+    # The config block in the README is what a person copies. A rev that is
+    # a release behind installs a git-a-grip without the hook they came for,
+    # and the failure looks like the hook is broken rather than unreleased.
+    #
+    # `[tool.commitizen] version_files` keeps this true through the bump; the
+    # test is what notices if that config is dropped or its pattern stops
+    # matching, because a bump happens in CI where nobody is reading.
+    readme = (ROOT / 'README.md').read_text()
+    version = PYPROJECT['project']['version']
+
+    revs = re.findall(r'^\s*rev: (v\S+)', readme, flags=re.MULTILINE)
+
+    assert revs, 'no rev: line in the README to check'
+    for rev in revs:
+        assert rev == f'v{version}'
 
 
 def test_every_alias_points_at_a_live_hook() -> None:

@@ -14,7 +14,7 @@ Two things, from one package:
 ```yaml
 repos:
   - repo: https://github.com/dannybrown37/git-a-grip
-    rev: v0.5.0
+    rev: v0.5.1
     hooks:
       - id: commitizen-early
       - id: ruff-check
