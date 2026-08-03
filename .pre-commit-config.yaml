@@ -8,7 +8,7 @@ repos:
     hooks:
       - id: commitizen-early
         name: Commitizen check (early)
-        entry: uv run commitizen-early-hook
+        entry: uv run python -m git_a_grip.hooks commitizen-early
         language: system
         always_run: true
         pass_filenames: false
@@ -38,28 +38,28 @@ repos:
     hooks:
       - id: ruff-check
         name: Ruff check
-        entry: uv run ruff-check-hook --config .ruff.toml
+        entry: uv run python -m git_a_grip.hooks ruff-check --config .ruff.toml
         language: system
         types: [python]
         require_serial: true
 
       - id: ruff-format
         name: Ruff format
-        entry: uv run ruff-format-hook --config .ruff.toml
+        entry: uv run python -m git_a_grip.hooks ruff-format --config .ruff.toml
         language: system
         types: [python]
         require_serial: true
 
       - id: readme-tree
         name: README file tree
-        entry: uv run readme-tree-hook
+        entry: uv run python -m git_a_grip.hooks readme-tree
         language: system
         always_run: true
         pass_filenames: false
 
       - id: tests
         name: Tests
-        entry: uv run pytest-hook tests/ -q
+        entry: uv run python -m git_a_grip.hooks pytest tests/ -q
         language: system
         files: ^(src/|tests/).*
         pass_filenames: false

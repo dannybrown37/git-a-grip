@@ -1,10 +1,11 @@
 """Guard the seams between pyproject.toml and .pre-commit-hooks.yaml.
 
-Two files describe how a hook reaches its tools, and nothing but these tests
-makes them agree: a hook whose `entry` is not a console script installs fine
-and fails at run time in the consumer's repo, and a ruff pin that drifts
-between the hook and the `hooks` extra means the two ways of running the same
-code run different ruffs.
+Three files describe how a hook reaches its tools, and nothing but these
+tests makes them agree: an `entry:` that no longer dispatches to a hook in
+`git_a_grip.hooks` installs fine and fails at run time in the consumer's
+repo, a script that leaks into `[project.scripts]` is one `gag --help` never
+mentions, and a ruff pin that drifts between the hook and the `hooks` extra
+means the two ways of running the same code run different ruffs.
 """
 
 from __future__ import annotations
@@ -19,6 +20,8 @@ PYPROJECT = tomllib.loads((ROOT / 'pyproject.toml').read_text())
 HOOKS = yaml.safe_load((ROOT / '.pre-commit-hooks.yaml').read_text())
 
 RUFF_PIN = 'ruff>=0.6'
+# Every hook goes through the dispatcher, never a console script.
+PYTHON_M = 'python -m'
 # Tools no command imports, so they must not be in the base dependencies.
 HOOK_ONLY_TOOLS = ('ruff',)
 
@@ -30,22 +33,32 @@ def _requirement_names(requirements: list[str]) -> set[str]:
     }
 
 
-def test_every_hook_entry_is_a_console_script() -> None:
-    scripts = set(PYPROJECT['project']['scripts'])
+def test_gag_is_the_only_thing_installed_on_a_path() -> None:
+    # One namespace, no second: `gag` is what a person types, and the hooks
+    # go through `python -m` so that installing the package cannot put a
+    # command on somebody's PATH that `gag --help` does not list.
+    assert set(PYPROJECT['project']['scripts']) == {'gag', 'git-a-grip'}
 
-    entries = {hook['entry'] for hook in HOOKS}
 
-    assert entries <= scripts
+def test_every_hook_entry_dispatches_to_a_known_hook() -> None:
+    # An entry naming a hook that `git_a_grip.hooks` does not have installs
+    # fine and fails at run time in the consumer's repo.
+    from git_a_grip import hooks
+
+    for hook in HOOKS:
+        prefix, _, name = hook['entry'].rpartition(' ')
+        assert prefix == f'{PYTHON_M} git_a_grip.hooks'
+        assert name in hooks.HOOKS
 
 
-def test_hook_entries_are_the_only_non_gag_scripts() -> None:
-    # Two namespaces, no third: `gag`/`git-a-grip` are what a person types,
-    # everything else exists because a hook's `entry:` names it. A command
-    # that leaks out as its own script is one nobody finds via `gag --help`.
-    scripts = set(PYPROJECT['project']['scripts'])
-    entries = {hook['entry'] for hook in HOOKS}
+def test_no_hook_dispatches_to_nothing() -> None:
+    # The other direction: a hook in the dispatcher that no `entry:` reaches
+    # is dead code a consumer can never run.
+    from git_a_grip import hooks
 
-    assert scripts - entries == {'gag', 'git-a-grip'}
+    entries = {hook['entry'].rsplit(' ', 1)[1] for hook in HOOKS}
+
+    assert set(hooks.HOOKS) == entries
 
 
 def test_the_gag_scripts_are_the_same_entry_point() -> None:

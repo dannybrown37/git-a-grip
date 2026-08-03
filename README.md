@@ -259,16 +259,19 @@ uv tool install git-a-grip         # `gag` on PATH
 ```
 
 `gag --help` lists every subcommand, and `gag <command> --help` its options.
-The hook entry points are deliberately *not* commands: pre-commit resolves
-them from `.pre-commit-hooks.yaml`, and nothing but a hook should be typing
-them.
+`gag` (and its `git-a-grip` alias) is the *only* thing this package puts on
+your PATH: the hooks are reached as `python -m git_a_grip.hooks <hook-id>`
+from `.pre-commit-hooks.yaml`, inside the env pre-commit builds, so
+installing the commands cannot leave seven scripts lying around that nobody
+was ever meant to type.
 
 That install carries only what the commands import — commitizen and pyyaml —
-not the ruff the hooks use. To run the hook entry points by hand as well, ask
-for the extra:
+not the ruff the hooks use. To run a hook by hand as well — debugging one
+outside pre-commit — ask for the extra and go through the dispatcher:
 
 ```bash
 uv tool install 'git-a-grip[hooks]'
+python -m git_a_grip.hooks ruff-check path/to/file.py
 ```
 
 Straight from a tag works too, and is the way to run something not yet
@@ -316,6 +319,7 @@ git-a-grip/
 |       |-- cli.py
 |       |-- commitizen_early.py
 |       |-- cz.py
+|       |-- hooks.py
 |       |-- node_hooks.py
 |       |-- pytest_hook.py
 |       |-- readme_tree.py
@@ -328,6 +332,7 @@ git-a-grip/
 |   |-- test_audit.py
 |   |-- test_cli.py
 |   |-- test_commitizen_early.py
+|   |-- test_hooks.py
 |   |-- test_node_hooks.py
 |   |-- test_packaging.py
 |   |-- test_pytest_hook.py

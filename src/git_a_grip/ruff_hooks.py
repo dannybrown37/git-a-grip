@@ -45,13 +45,3 @@ def run(subcommand: str, args: list[str]) -> int:
             sys.stderr.write('ruff: failed to re-stage the rewritten files.\n')
             return 1
     return code
-
-
-def check_cli() -> None:
-    """Console-script entry point for `ruff check --fix`."""
-    raise SystemExit(run('check', ['--fix', *sys.argv[1:]]))
-
-
-def format_cli() -> None:
-    """Console-script entry point for `ruff format`."""
-    raise SystemExit(run('format', sys.argv[1:]))

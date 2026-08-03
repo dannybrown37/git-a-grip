@@ -134,13 +134,3 @@ def tsc(argv: list[str]) -> int:
     )
     project = [] if named else ['-p', '.']
     return run([*runner, 'tsc', '--noEmit', *project, *args], root, 'tsc')
-
-
-def eslint_cli() -> None:
-    """Console-script entry point for the eslint hook."""
-    raise SystemExit(eslint(sys.argv[1:]))
-
-
-def tsc_cli() -> None:
-    """Console-script entry point for the tsc hook."""
-    raise SystemExit(tsc(sys.argv[1:]))

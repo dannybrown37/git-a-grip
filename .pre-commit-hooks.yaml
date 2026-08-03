@@ -3,7 +3,7 @@
   description: >-
     Reject a non-conventional commit message during the pre-commit stage,
     before the slow hooks run, by recovering it from git's argv.
-  entry: commitizen-early-hook
+  entry: python -m git_a_grip.hooks commitizen-early
   language: python
   stages: [pre-commit]
   always_run: true
@@ -14,7 +14,7 @@
   description: >-
     Lint with `ruff check --fix`, re-staging the files it fixed so the fix is
     part of the commit rather than left dirty in the working tree.
-  entry: ruff-check-hook
+  entry: python -m git_a_grip.hooks ruff-check
   language: python
   types: [python]
   # ruff is not a dependency of the package -- only these two hooks need it,
@@ -29,7 +29,7 @@
   name: Ruff format
   description: >-
     Format with `ruff format`, re-staging the files it rewrote.
-  entry: ruff-format-hook
+  entry: python -m git_a_grip.hooks ruff-format
   language: python
   types: [python]
   additional_dependencies: [ruff>=0.6]
@@ -40,7 +40,7 @@
   description: >-
     Regenerate the file tree between the `<!-- tree:start -->` markers in the
     README from `git ls-files`, and re-stage it.
-  entry: readme-tree-hook
+  entry: python -m git_a_grip.hooks readme-tree
   language: python
   always_run: true
   pass_filenames: false
@@ -50,7 +50,7 @@
   description: >-
     Lint with the project's own eslint (`--fix`, and `--max-warnings=0`
     unless you say otherwise), re-staging the files it fixed.
-  entry: eslint-hook
+  entry: python -m git_a_grip.hooks eslint
   language: python
   types_or: [javascript, jsx, ts, tsx]
   require_serial: true
@@ -60,7 +60,7 @@
   description: >-
     Type-check the project with the project's own tsc. Never passes
     filenames -- tsc ignores tsconfig.json when it is given any.
-  entry: tsc-hook
+  entry: python -m git_a_grip.hooks tsc
   language: python
   types_or: [ts, tsx]
   pass_filenames: false
@@ -71,7 +71,7 @@
     Run the consuming repo's test suite from the repo root, through a runner
     that resolves the project's own environment (`uv run pytest` by default,
     override with `--runner=...`).
-  entry: pytest-hook
+  entry: python -m git_a_grip.hooks pytest
   language: python
   files: ^(src/|tests/).*
   pass_filenames: false

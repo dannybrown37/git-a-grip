@@ -142,12 +142,3 @@ def main() -> int:
         'Fix the message and re-commit.\n',
     )
     return 1
-
-
-def main_cli() -> None:
-    """Console-script entry point."""
-    raise SystemExit(main())
-
-
-if __name__ == '__main__':
-    main_cli()

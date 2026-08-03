@@ -162,12 +162,3 @@ def main(argv: list[str]) -> int:
     relative = str(target.relative_to(root))
     sys.stderr.write(f'readme-tree: rewrote and re-staged {relative}\n')
     return 1 if restage.add([str(target)]) != 0 else 0
-
-
-def main_cli() -> None:
-    """Console-script entry point."""
-    raise SystemExit(main(sys.argv[1:]))
-
-
-if __name__ == '__main__':
-    main_cli()

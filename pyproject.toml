@@ -39,17 +39,10 @@ hooks = ["ruff>=0.6"]
 gag = "git_a_grip.cli:main_cli"
 git-a-grip = "git_a_grip.cli:main_cli"
 
-# Typed by nobody. These exist only because `.pre-commit-hooks.yaml` names
-# them in an `entry:`, and pre-commit resolves an entry through the console
-# scripts of the env it builds. tests/test_packaging.py asserts every hook
-# entry is one of these, and that these are the *only* `-hook` scripts.
-commitizen-early-hook = "git_a_grip.commitizen_early:main_cli"
-readme-tree-hook = "git_a_grip.readme_tree:main_cli"
-eslint-hook = "git_a_grip.node_hooks:eslint_cli"
-tsc-hook = "git_a_grip.node_hooks:tsc_cli"
-ruff-check-hook = "git_a_grip.ruff_hooks:check_cli"
-ruff-format-hook = "git_a_grip.ruff_hooks:format_cli"
-pytest-hook = "git_a_grip.pytest_hook:main_cli"
+# The hook entry points are deliberately NOT here. pre-commit runs a hook's
+# `entry:` with its env's bin/ first on PATH, so `python -m git_a_grip.hooks
+# <id>` reaches them without a console script -- and `gag` stays the only
+# thing this package puts on a person's PATH.
 
 [project.urls]
 Homepage = "https://github.com/dannybrown37/git-a-grip"
