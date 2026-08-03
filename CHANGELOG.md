@@ -1,3 +1,9 @@
+## v0.5.0 (2026-08-03)
+
+### Feat
+
+- add hook-sync script; eslint/tsc hooks; readme tree script+hook
+
 ## v0.4.0 (2026-08-02)
 
 ### Feat
