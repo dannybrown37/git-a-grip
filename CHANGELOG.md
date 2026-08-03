@@ -1,3 +1,15 @@
+## v0.6.0 (2026-08-03)
+
+### Feat
+
+- rename hook to embed-tree; bring over embed-command as well
+
+### Fix
+
+- debug ci and update claude
+- remove git-release command I shan't be using
+- pin version to readme
+
 ## v0.5.1 (2026-08-03)
 
 ### Fix
