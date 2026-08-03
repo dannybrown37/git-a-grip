@@ -61,7 +61,7 @@ def main(argv: list[str] | None = None) -> int:
         name = current
     hook = HOOKS.get(name)
     if hook is None:
-        known = ', '.join(HOOKS)
+        known = ', '.join(sorted(HOOKS))
         sys.stderr.write(
             f'git-a-grip: no such hook: {name}\nKnown hooks: {known}\n',
         )

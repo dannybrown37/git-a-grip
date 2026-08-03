@@ -117,13 +117,13 @@ repos:
       - id: <...any number of others>
 
   commitizen-early  Reject a bad commit message before the slow hooks run.
+  embed-command     Keep a command's output (`--help`) true in the README.
+  embed-tree        Regenerate the README file tree, and re-stage it.
+  eslint            Lint with the project's own eslint, re-staging fixes.
+  pytest            Run the repo's tests through its own environment.
   ruff-check        Lint with `ruff check --fix`, re-staging what it fixed.
   ruff-format       Format with `ruff format`, re-staging what it rewrote.
-  embed-tree        Regenerate the README file tree, and re-stage it.
-  embed-command     Keep a command's output (`--help`) true in the README.
-  eslint            Lint with the project's own eslint, re-staging fixes.
   tsc               Type-check the project with the project's own tsc.
-  pytest            Run the repo's tests through its own environment.
 
 gag hooks <id> for one in full, gag hooks --all for all of them.
 ```

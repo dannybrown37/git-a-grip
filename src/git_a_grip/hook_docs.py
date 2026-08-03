@@ -256,7 +256,7 @@ def _listing(paint: Style) -> str:
         # on some terminals, and the column has to line up either way.
         f'  {paint(hook_id, "bold")}{" " * (width - len(hook_id))}  '
         f'{doc.summary}'
-        for hook_id, doc in DOCS.items()
+        for hook_id, doc in sorted(DOCS.items())
     ]
     lines += [
         '',
@@ -290,12 +290,12 @@ def main(argv: list[str]) -> int:
     paint = style_for(sys.stdout)
 
     if argv and argv[0] in {'-h', '--help'}:
-        sys.stdout.write(_USAGE.format(hooks=', '.join(DOCS)))
+        sys.stdout.write(_USAGE.format(hooks=', '.join(sorted(DOCS))))
         return 0
 
     if argv and argv[0] == '--all':
         sys.stdout.write(_header(paint))
-        for hook_id, doc in DOCS.items():
+        for hook_id, doc in sorted(DOCS.items()):
             sys.stdout.write(f'\n{_entry(hook_id, doc, paint)}')
         return 0
 
@@ -306,7 +306,7 @@ def main(argv: list[str]) -> int:
     wanted = argv[0]
     doc = DOCS.get(wanted)
     if doc is None:
-        known = ', '.join(DOCS)
+        known = ', '.join(sorted(DOCS))
         sys.stderr.write(
             f'gag hooks: no such hook: {wanted}\nKnown hooks: {known}\n',
         )

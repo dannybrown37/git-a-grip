@@ -27,6 +27,24 @@ def test_the_bare_command_lists_every_hook_in_one_line_each(
     assert len(out.splitlines()) < len(hook_docs.DOCS) * 3
 
 
+def test_the_list_is_alphabetical(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    # DOCS is ordered by what a reader should meet first; the list is
+    # ordered by where a reader will look. Scanning for a known id in a
+    # curated order means reading all eight lines.
+    assert hook_docs.main([]) == 0
+
+    out = capsys.readouterr().out
+    seen = [
+        hook_id
+        for line in out.splitlines()
+        for hook_id in hook_docs.DOCS
+        if line.startswith(f'  {hook_id} ')
+    ]
+    assert seen == sorted(hook_docs.DOCS)
+
+
 def test_the_list_says_where_the_detail_is(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
