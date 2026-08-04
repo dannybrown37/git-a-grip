@@ -6,8 +6,8 @@ is their index -- for each hook, what it does, the `.pre-commit-config.yaml`
 block that turns it on, and the `python -m` line that runs it by hand when
 you are debugging one.
 
-Bare `gag hooks` is a one-line-per-hook list, because the full seven entries
-are a screenful nobody reads to the end. The detail is a second command away,
+Bare `gag hooks` is a one-line-per-hook list, because the full set of entries
+is a screenful nobody reads to the end. The detail is a second command away,
 for the one hook you actually came for.
 
 The `description:` prose here is a second copy of the field of that name in
@@ -122,6 +122,33 @@ DOCS: dict[str, HookDoc] = {
             '`--marker=help`. A command that exits non-zero fails the commit '
             'rather than pasting its error into the README: pass '
             '`--exit=N` when that status is normal for it.'
+        ),
+    ),
+    'regen-file': HookDoc(
+        name='Regenerated file',
+        summary='Run a generator script, and re-stage what it rewrote.',
+        description=(
+            'Run the generator named in `args` and re-stage the files it '
+            'rewrote, for a script that owns a whole file rather than a '
+            'marked block.'
+        ),
+        config=[
+            '- id: regen-file',
+            "  args: ['--command=uv run python scripts/update_readme.py',",
+            "         '--file=README.md']",
+            '  files: ^(src/.*\\.py|README\\.md)$  # scope it yourself',
+        ],
+        notes=(
+            'The replacement for '
+            "`bash -c 'run-the-script && git add the-file'`. Runs only the "
+            'command you write down, without a shell -- nothing is '
+            'discovered, and `&&` is an argument rather than a second '
+            'command. `--file` repeats for a script that writes more than '
+            'one. A file is staged only when its contents actually moved, '
+            'and a `--file` the command did not write fails the commit '
+            'rather than passing an empty run off as a clean one. Use '
+            '`embed-command` instead when the script owns only the region '
+            'between two markers.'
         ),
     ),
     'eslint': HookDoc(

@@ -59,14 +59,15 @@ jobs:
       # .pre-commit-hooks.yaml in the isolated env a consumer would get, so
       # this fails if ruff stops arriving via additional_dependencies -- which
       # the repo's own config, using `language: system` locally, cannot catch.
-      # SKIP=embed-command because try-repo runs every hook with no args, and
-      # embed-command with no `--command` refuses to do anything -- correctly,
-      # since it runs only what a consumer names. Its behaviour under the args
-      # it is meant to have is covered by tests/test_embed_command.py and by
-      # this repo's own config in the step below.
+      # SKIP=embed-command,regen-file because try-repo runs every hook with no
+      # args, and either one without its `--command` refuses to do anything --
+      # correctly, since they run only what a consumer names. Their behaviour
+      # under the args they are meant to have is covered by
+      # tests/test_embed_command.py and tests/test_regen_file.py, and by this
+      # repo's own config in the step below.
       - name: Hooks install and run as a consumer would get them
         env:
-          SKIP: embed-command
+          SKIP: embed-command,regen-file
         run: uv run --with pre-commit pre-commit try-repo . --all-files
 
       - name: This repo's own config still passes

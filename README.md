@@ -22,6 +22,8 @@ repos:
       - id: embed-tree
       - id: embed-command
         args: ['--marker=help', '--command=mytool --help']
+      - id: regen-file
+        args: ['--command=python scripts/build_docs.py', '--file=docs/api.md']
       - id: pytest
         args: [tests/, -q]
       - id: vitest
@@ -40,6 +42,7 @@ out to `uv run` / your package manager.)
 | `pytest` | Your test suite, from the repo root, in your project's env. `args: ['--runner=uv run --extra api pytest', ...]` to change the runner. |
 | `embed-tree` | Keeps a file tree in your README true. Drop `<!-- tree:start -->` / `<!-- tree:end -->` in, and it regenerates and re-stages on every commit. Contents come from `git ls-files`, so it's exactly what's committed. (Was `readme-tree`; the old id still works.) |
 | `embed-command` | Keeps a command's output — `mytool --help`, `make help` — true in your README. Name the command in `args`; nothing is discovered and run on its own. |
+| `regen-file` | Replaces `bash -c 'run-the-script && git add the-file'`. Runs the generator you name and re-stages the files you name — only the ones whose contents actually moved, and it fails the commit if the script quietly stopped writing one. Use `embed-command` instead when the script owns only a marked block. |
 | `eslint` | `eslint --fix`, re-staged, `--max-warnings=0` by default so warnings can't pile up forever. `--dir=web` for a monorepo. |
 | `tsc` | Type-checks *the project*, never bare filenames — given filenames, tsc silently ignores your `tsconfig.json`. `--dir=web` for a monorepo. |
 | `vitest` | `vitest run`, never the watch mode a bare `vitest` starts — that hangs the commit with no clue why. Sets `CI=true`, so a missing snapshot fails instead of being written and committed. |
@@ -70,10 +73,14 @@ match, since files outside that subdirectory are skipped anyway:
 chooses its own test tool and appending `vitest run` to it would be wrong —
 write `--runner=npm test -- --run` in full.
 
-The two `embed-*` hooks are the exception: their `args` configure the hook
-itself (`--marker=`, `--command=`, `--file=`, `--depth=`, `--exit=`). One
-entry per block, each with its own `--marker`. Scope them with `files:` so a
-block that changes twice a year isn't regenerated on every commit.
+The `embed-*` hooks and `regen-file` are the exception: their `args` configure
+the hook itself (`--marker=`, `--command=`, `--file=`, `--depth=`, `--exit=`).
+One entry per block, each with its own `--marker`; `regen-file` takes
+`--file=` once per file its script writes. In all three the command is only
+ever the one you wrote down — nothing is discovered and run on its own, and
+there is no shell, so `&&` is an argument rather than a second command. Scope
+them with `files:` so a block that changes twice a year isn't regenerated on
+every commit.
 
 Full details on any hook, including the paste-ready config block:
 
@@ -159,6 +166,7 @@ repos:
   embed-tree        Regenerate the README file tree, and re-stage it.
   eslint            Lint with the project's own eslint, re-staging fixes.
   pytest            Run the repo's tests through its own environment.
+  regen-file        Run a generator script, and re-stage what it rewrote.
   ruff-check        Lint with `ruff check --fix`, re-staging what it fixed.
   ruff-format       Format with `ruff format`, re-staging what it rewrote.
   tsc               Type-check the project with the project's own tsc.
@@ -217,6 +225,7 @@ git-a-grip/
 |       |-- hooks.py
 |       |-- node_hooks.py
 |       |-- pytest_hook.py
+|       |-- regen_file.py
 |       |-- restage.py
 |       |-- ruff_hooks.py
 |       |-- sync.py
@@ -233,6 +242,7 @@ git-a-grip/
 |   |-- test_node_hooks.py
 |   |-- test_packaging.py
 |   |-- test_pytest_hook.py
+|   |-- test_regen_file.py
 |   |-- test_restage.py
 |   |-- test_ruff_hooks.py
 |   |-- test_sync.py

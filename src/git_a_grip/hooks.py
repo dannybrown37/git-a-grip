@@ -17,7 +17,7 @@ import sys
 from collections.abc import Callable
 
 from git_a_grip import commitizen_early, embed_command, embed_tree
-from git_a_grip import node_hooks, pytest_hook, ruff_hooks
+from git_a_grip import node_hooks, pytest_hook, regen_file, ruff_hooks
 
 Hook = Callable[[list[str]], int]
 
@@ -25,6 +25,7 @@ HOOKS: dict[str, Hook] = {
     'commitizen-early': lambda _argv: commitizen_early.main(),
     'embed-tree': embed_tree.main,
     'embed-command': embed_command.main,
+    'regen-file': regen_file.main,
     'ruff-check': lambda argv: ruff_hooks.run('check', ['--fix', *argv]),
     'ruff-format': lambda argv: ruff_hooks.run('format', argv),
     'eslint': node_hooks.eslint,

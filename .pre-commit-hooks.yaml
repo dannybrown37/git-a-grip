@@ -58,6 +58,21 @@
   always_run: true
   pass_filenames: false
 
+- id: regen-file
+  name: Regenerated file
+  description: >-
+    Run the generator named in `args` and re-stage the files it rewrote, for
+    a script that owns a whole file rather than a marked block.
+  entry: python -m git_a_grip.hooks regen-file
+  language: python
+  # always_run for the same reason as embed-command: nothing here knows what
+  # feeds the generator. Scope it with your own `files:` -- a subprocess on
+  # every commit is the tax that gets a hook removed.
+  always_run: true
+  pass_filenames: false
+  # Calls `git add`; running two copies in parallel races index.lock.
+  require_serial: true
+
 - id: eslint
   name: ESLint
   description: >-
