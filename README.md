@@ -39,11 +39,25 @@ they must run inside *your* project's environment, so they shell out to
 | `pytest` | Your test suite, from the repo root, in your project's env. `args: ['--runner=uv run --extra api pytest', ...]` to change the runner. |
 | `embed-tree` | Keeps a file tree in your README true. Drop `<!-- tree:start -->` / `<!-- tree:end -->` in, and it regenerates and re-stages on every commit. Contents come from `git ls-files`, so it's exactly what's committed. (Was `readme-tree`; the old id still works.) |
 | `embed-command` | Keeps a command's output — `mytool --help`, `make help` — true in your README. Name the command in `args`; nothing is discovered and run on its own. |
-| `eslint` | `eslint --fix`, re-staged, `--max-warnings=0` by default so warnings can't pile up forever. |
-| `tsc` | Type-checks *the project*, never bare filenames — given filenames, tsc silently ignores your `tsconfig.json`. |
+| `eslint` | `eslint --fix`, re-staged, `--max-warnings=0` by default so warnings can't pile up forever. `--dir=web` for a monorepo. |
+| `tsc` | Type-checks *the project*, never bare filenames — given filenames, tsc silently ignores your `tsconfig.json`. `--dir=web` for a monorepo. |
 
 Anything in `args` is passed through to the underlying tool. Pin your own
 tool version with `additional_dependencies: [ruff==0.16.1]`.
+
+`eslint` and `tsc` run from the repo root unless you pass `--dir=`. If your JS
+lives in a subdirectory, its `eslint.config.mjs`, `tsconfig.json` and
+`node_modules` resolve from *there*, so name it — and scope the hook to match,
+since files outside that subdirectory are skipped anyway:
+
+```yaml
+      - id: eslint
+        args: [--dir=web]
+        files: ^web/
+      - id: tsc
+        args: [--dir=web]
+        files: ^web/
+```
 
 The two `embed-*` hooks are the exception: their `args` configure the hook
 itself (`--marker=`, `--command=`, `--file=`, `--depth=`, `--exit=`). One
@@ -105,7 +119,7 @@ hook keeping `gag hooks` output honest:
 <!-- hooks:start -->
 
 ```
-git-a-grip 0.5.1 -- pre-commit hooks
+git-a-grip 0.6.0 -- pre-commit hooks
 
 Turn one on in .pre-commit-config.yaml:
 

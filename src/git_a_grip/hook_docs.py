@@ -135,8 +135,10 @@ DOCS: dict[str, HookDoc] = {
         config=['- id: eslint', '  args: [--max-warnings=10]  # optional'],
         notes=(
             "Runs through the project's package manager, detected from the "
-            'lockfile (pnpm, bun, yarn, else npx) and overridable with '
-            '`--runner=...`.'
+            'nearest lockfile (pnpm, bun, yarn, else npx) and overridable '
+            'with `--runner=...`. `--dir=web` runs it from a subdirectory, '
+            'for a monorepo whose eslint config and node_modules live there; '
+            'files outside that subdirectory are skipped.'
         ),
     ),
     'tsc': HookDoc(
@@ -147,7 +149,11 @@ DOCS: dict[str, HookDoc] = {
             'filenames -- tsc ignores tsconfig.json when it is given any.'
         ),
         config=['- id: tsc', '  args: [-p, tsconfig.build.json]  # optional'],
-        notes='Type-checks `-p .` unless you name another project.',
+        notes=(
+            'Type-checks `-p .` unless you name another project. `--dir=web` '
+            'runs it from a subdirectory, where `.` is that subdirectory and '
+            'so is the tsconfig.json it picks up.'
+        ),
     ),
     'pytest': HookDoc(
         name='Tests',
