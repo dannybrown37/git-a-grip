@@ -20,9 +20,9 @@ jobs:
         # versions where a syntax or stdlib assumption actually breaks.
         python-version: ['3.11', '3.13']
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@v7
         with:
           python-version: ${{ matrix.python-version }}
           enable-cache: true
@@ -84,7 +84,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           # Full history so commitizen can read the tags it bumps from, and a
           # PAT because pushes made with the default GITHUB_TOKEN do not
@@ -93,7 +93,7 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.BUMP_TOKEN }}
 
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@v7
 
       - name: Configure git identity
         run: |
