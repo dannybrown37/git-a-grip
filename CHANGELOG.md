@@ -1,3 +1,9 @@
+## v0.8.1 (2026-08-04)
+
+### Fix
+
+- make gag sync capture its own staleness
+
 ## v0.8.0 (2026-08-04)
 
 ### Feat
