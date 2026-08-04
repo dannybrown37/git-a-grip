@@ -1,3 +1,9 @@
+## v0.8.0 (2026-08-04)
+
+### Feat
+
+- add vitest runner hook
+
 ## v0.7.0 (2026-08-04)
 
 ### Feat
