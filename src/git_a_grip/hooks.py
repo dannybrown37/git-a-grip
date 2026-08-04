@@ -29,6 +29,7 @@ HOOKS: dict[str, Hook] = {
     'ruff-format': lambda argv: ruff_hooks.run('format', argv),
     'eslint': node_hooks.eslint,
     'tsc': node_hooks.tsc,
+    'vitest': node_hooks.vitest,
     'pytest': pytest_hook.main,
 }
 

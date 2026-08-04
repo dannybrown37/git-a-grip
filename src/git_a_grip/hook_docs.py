@@ -155,6 +155,23 @@ DOCS: dict[str, HookDoc] = {
             'so is the tsconfig.json it picks up.'
         ),
     ),
+    'vitest': HookDoc(
+        name='Vitest',
+        summary="Run the project's vitest suite once, never in watch mode.",
+        description=(
+            "Run the project's vitest suite once with `vitest run` -- never "
+            'the watch mode a bare `vitest` starts, which would hang the '
+            'commit.'
+        ),
+        config=['- id: vitest', '  args: [--dir=web]  # optional'],
+        notes=(
+            'Runs the whole suite, never the changed files. `CI=true` is set, '
+            'so a missing snapshot fails rather than being written and '
+            'committed as though it had passed. `--dir=web` runs it from a '
+            'subdirectory; `--runner=...` replaces the command outright, so '
+            'say `--runner=npm test -- --run` in full.'
+        ),
+    ),
     'pytest': HookDoc(
         name='Tests',
         summary="Run the repo's tests through its own environment.",

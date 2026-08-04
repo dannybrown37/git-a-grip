@@ -24,12 +24,13 @@ repos:
         args: ['--marker=help', '--command=mytool --help']
       - id: pytest
         args: [tests/, -q]
+      - id: vitest
 ```
 
 Nothing to install. Your project needs no `ruff`, `cz` or `uv` on PATH —
-pre-commit builds the env. (`pytest`, `eslint` and `tsc` are the exceptions:
-they must run inside *your* project's environment, so they shell out to
-`uv run` / your package manager.)
+pre-commit builds the env. (`pytest`, `eslint`, `tsc` and `vitest` are the
+exceptions: they must run inside *your* project's environment, so they shell
+out to `uv run` / your package manager.)
 
 | Hook | What it does for you |
 | --- | --- |
@@ -41,14 +42,15 @@ they must run inside *your* project's environment, so they shell out to
 | `embed-command` | Keeps a command's output — `mytool --help`, `make help` — true in your README. Name the command in `args`; nothing is discovered and run on its own. |
 | `eslint` | `eslint --fix`, re-staged, `--max-warnings=0` by default so warnings can't pile up forever. `--dir=web` for a monorepo. |
 | `tsc` | Type-checks *the project*, never bare filenames — given filenames, tsc silently ignores your `tsconfig.json`. `--dir=web` for a monorepo. |
+| `vitest` | `vitest run`, never the watch mode a bare `vitest` starts — that hangs the commit with no clue why. Sets `CI=true`, so a missing snapshot fails instead of being written and committed. |
 
 Anything in `args` is passed through to the underlying tool. Pin your own
 tool version with `additional_dependencies: [ruff==0.16.1]`.
 
-`eslint` and `tsc` run from the repo root unless you pass `--dir=`. If your JS
-lives in a subdirectory, its `eslint.config.mjs`, `tsconfig.json` and
-`node_modules` resolve from *there*, so name it — and scope the hook to match,
-since files outside that subdirectory are skipped anyway:
+`eslint`, `tsc` and `vitest` run from the repo root unless you pass `--dir=`.
+If your JS lives in a subdirectory, its `eslint.config.mjs`, `tsconfig.json`
+and `node_modules` resolve from *there*, so name it — and scope the hooks to
+match, since files outside that subdirectory are skipped anyway:
 
 ```yaml
       - id: eslint
@@ -57,7 +59,16 @@ since files outside that subdirectory are skipped anyway:
       - id: tsc
         args: [--dir=web]
         files: ^web/
+      - id: vitest
+        args: [--dir=web]
+        files: ^web/
 ```
+
+`--runner=` means different things either side of that list. For `eslint` and
+`tsc` it names only the package manager the tool is run *through*; for
+`vitest` and `pytest` it replaces the command outright, because `npm test`
+chooses its own test tool and appending `vitest run` to it would be wrong —
+write `--runner=npm test -- --run` in full.
 
 The two `embed-*` hooks are the exception: their `args` configure the hook
 itself (`--marker=`, `--command=`, `--file=`, `--depth=`, `--exit=`). One
@@ -119,7 +130,7 @@ hook keeping `gag hooks` output honest:
 <!-- hooks:start -->
 
 ```
-git-a-grip 0.6.0 -- pre-commit hooks
+git-a-grip 0.7.0 -- pre-commit hooks
 
 Turn one on in .pre-commit-config.yaml:
 
@@ -138,6 +149,7 @@ repos:
   ruff-check        Lint with `ruff check --fix`, re-staging what it fixed.
   ruff-format       Format with `ruff format`, re-staging what it rewrote.
   tsc               Type-check the project with the project's own tsc.
+  vitest            Run the project's vitest suite once, never in watch mode.
 
 gag hooks <id> for one in full, gag hooks --all for all of them.
 ```

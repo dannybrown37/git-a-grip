@@ -16,14 +16,22 @@ def _record(
     monkeypatch: pytest.MonkeyPatch,
     root: Path,
     workdirs: list[Path] | None = None,
+    envs: list[dict[str, str] | None] | None = None,
 ) -> list[list[str]]:
     """Capture the commands the hook would run instead of running them."""
     calls: list[list[str]] = []
 
-    def fake_run(command: list[str], workdir: Path, _tool: str) -> int:
+    def fake_run(
+        command: list[str],
+        workdir: Path,
+        _tool: str,
+        extra_env: dict[str, str] | None = None,
+    ) -> int:
         calls.append(command)
         if workdirs is not None:
             workdirs.append(workdir)
+        if envs is not None:
+            envs.append(extra_env)
         return 0
 
     monkeypatch.setattr(node_hooks, 'repo_root', lambda: root)
@@ -222,6 +230,75 @@ def test_nearest_lockfile_wins_over_the_root(tmp_path: Path) -> None:
     runner = node_hooks.detect_runner(tmp_path / 'web', tmp_path)
 
     assert runner == 'npx --no-install'
+
+
+def test_vitest_runs_once_never_in_watch_mode(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A bare `vitest` watches, and would hang the commit forever."""
+    calls = _record(monkeypatch, tmp_path)
+
+    assert node_hooks.vitest([]) == 0
+    assert calls[0] == ['npx', '--no-install', 'vitest', 'run']
+
+
+def test_vitest_sets_ci_so_snapshots_are_not_written(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    envs: list[dict[str, str] | None] = []
+    _record(monkeypatch, tmp_path, envs=envs)
+
+    node_hooks.vitest([])
+
+    assert envs == [{'CI': 'true'}]
+
+
+def test_vitest_explicit_runner_replaces_the_whole_command(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """`npm test` picks its own tool -- appending `vitest run` is wrong."""
+    calls = _record(monkeypatch, tmp_path)
+
+    node_hooks.vitest(['--runner=npm test -- --run'])
+
+    assert calls[0] == ['npm', 'test', '--', '--run']
+
+
+def test_vitest_passes_extra_args_through(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls = _record(monkeypatch, tmp_path)
+
+    node_hooks.vitest(['--reporter=dot'])
+
+    assert calls[0][-1] == '--reporter=dot'
+    assert 'run' in calls[0]
+
+
+def test_vitest_runs_from_the_named_subdirectory(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    workdirs: list[Path] = []
+    _record(monkeypatch, tmp_path, workdirs)
+    (tmp_path / 'web').mkdir()
+
+    assert node_hooks.vitest(['--dir=web']) == 0
+    assert workdirs == [tmp_path / 'web']
+
+
+def test_vitest_rejects_an_empty_runner(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls = _record(monkeypatch, tmp_path)
+
+    assert node_hooks.vitest(['--runner=']) == 1
+    assert calls == []
 
 
 def test_clean_env_drops_pre_commit_venv(

@@ -78,6 +78,18 @@
   types_or: [ts, tsx]
   pass_filenames: false
 
+- id: vitest
+  name: Vitest
+  description: >-
+    Run the project's vitest suite once with `vitest run` -- never the watch
+    mode a bare `vitest` starts, which would hang the commit.
+  entry: python -m git_a_grip.hooks vitest
+  language: python
+  types_or: [javascript, jsx, ts, tsx]
+  # Runs the suite, not the changed files: a test that broke lives somewhere
+  # other than the file that broke it.
+  pass_filenames: false
+
 - id: pytest
   name: Tests
   description: >-

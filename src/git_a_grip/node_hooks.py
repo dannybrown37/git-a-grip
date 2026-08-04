@@ -1,4 +1,4 @@
-"""ESLint and tsc hooks that avoid the two traps every repo hits.
+"""ESLint, tsc and vitest hooks that avoid the traps every repo hits.
 
 Both hooks run through the project's own package manager, not through a copy
 of the tool that pre-commit installed -- a JS project's lint rules live in its
@@ -26,6 +26,12 @@ type-checks with default compiler options, silently, and reports errors that
 your real config excludes (or misses ones it includes). This hook never
 passes filenames: it type-checks the project, which is the only thing tsc
 can correctly do.
+
+**vitest** watches by default. A bare `vitest` as a hook never returns, and
+the commit hangs with no output explaining why. This hook runs `vitest run`,
+and sets `CI=true` besides -- which also stops vitest writing new snapshots,
+so a missing snapshot fails the commit instead of being silently created and
+committed as if it had always passed.
 """
 
 from __future__ import annotations
@@ -93,19 +99,25 @@ def detect_runner(start: Path, root: Path | None = None) -> str:
     return DEFAULT_RUNNER
 
 
-def split_args(
-    argv: list[str],
-    workdir: Path,
-    root: Path | None = None,
-) -> tuple[list[str], list[str]]:
-    """Split argv into the runner command and the arguments for the tool."""
-    runner = ''
+def take_runner(argv: list[str]) -> tuple[str | None, list[str]]:
+    """Pull `--runner=` out of argv, or None when it was not given."""
+    runner: str | None = None
     rest: list[str] = []
     for arg in argv:
         if arg.startswith(_RUNNER_FLAG):
             runner = arg[len(_RUNNER_FLAG) :]
         else:
             rest.append(arg)
+    return runner, rest
+
+
+def split_args(
+    argv: list[str],
+    workdir: Path,
+    root: Path | None = None,
+) -> tuple[list[str], list[str]]:
+    """Split argv into the runner command and the arguments for the tool."""
+    runner, rest = take_runner(argv)
     return (runner or detect_runner(workdir, root)).split(), rest
 
 
@@ -153,13 +165,18 @@ def clean_env() -> dict[str, str]:
     return env
 
 
-def run(command: list[str], workdir: Path, tool: str) -> int:
+def run(
+    command: list[str],
+    workdir: Path,
+    tool: str,
+    extra_env: dict[str, str] | None = None,
+) -> int:
     """Run `command` from `workdir`, or explain why it could not."""
     try:
         return subprocess.run(  # noqa: S603
             command,
             cwd=workdir,
-            env=clean_env(),
+            env=clean_env() | (extra_env or {}),
             check=False,
         ).returncode
     except FileNotFoundError:
@@ -208,3 +225,21 @@ def tsc(argv: list[str]) -> int:
     # `.` is workdir, so --dir= already points this at the right tsconfig.
     project = [] if named else ['-p', '.']
     return run([*runner, 'tsc', '--noEmit', *project, *args], workdir, 'tsc')
+
+
+def vitest(argv: list[str]) -> int:
+    """Run the project's vitest suite once. See module docs on watch mode."""
+    root = repo_root()
+    workdir, argv = take_dir(argv, root)
+    runner, args = take_runner(argv)
+    if runner is None:
+        command = [*detect_runner(workdir, root).split(), 'vitest', 'run']
+    elif not runner.strip():
+        sys.stderr.write('vitest: --runner is empty, nothing to run.\n')
+        return 1
+    else:
+        # An explicit runner is the whole command -- `npm test` has its own
+        # idea of which test tool it invokes, so appending `vitest run` to it
+        # would be wrong. Say `--runner=npm test -- --run` in full.
+        command = runner.split()
+    return run([*command, *args], workdir, 'vitest', {'CI': 'true'})
