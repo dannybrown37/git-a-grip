@@ -1,3 +1,14 @@
+## v0.9.0 (2026-08-04)
+
+### Feat
+
+- add a hook for regenerating a full file
+
+### Fix
+
+- prefer checkout's own pyproject.toml over importlib.meta to keep local in sync
+- deprecated CI
+
 ## v0.8.1 (2026-08-04)
 
 ### Fix
