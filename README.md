@@ -121,6 +121,19 @@ The rewrite is textual and touches only the `rev:` line, so your comments and
 formatting survive. Nothing is committed — changes land in each repo's
 working tree for you to review.
 
+Without `--to` or `--latest` the target is the version you have *installed*,
+which is only a stand-in for the current release. So that run also asks the
+source for its newest tag and warns on stderr when your install is behind it:
+
+```
+sync: installed v0.7.0, but v0.8.0 is the newest tag at <repo>.
+      Re-run with --latest to pin v0.8.0 instead, or upgrade git-a-grip.
+```
+
+The plan is still printed — the warning says the target may not be the one
+you want, not that the answer is useless. An unreachable remote skips the
+check silently, so `gag sync` still works offline.
+
 ### `gag hooks` — the hook reference
 
 The table above, in full, from your installed version. Colorized for the
@@ -130,7 +143,7 @@ hook keeping `gag hooks` output honest:
 <!-- hooks:start -->
 
 ```
-git-a-grip 0.7.0 -- pre-commit hooks
+git-a-grip 0.8.0 -- pre-commit hooks
 
 Turn one on in .pre-commit-config.yaml:
 

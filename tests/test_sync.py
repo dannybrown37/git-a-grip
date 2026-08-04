@@ -165,6 +165,53 @@ def test_missing_directory_refuses(
     assert 'not a directory' in capsys.readouterr().err
 
 
+def test_staleness_note_fires_when_the_install_is_behind(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(sync, 'latest_tag', lambda _: 'v0.8.0')
+
+    note = sync.staleness_note(version.REPO_URL, 'v0.7.0')
+
+    assert 'v0.7.0' in note
+    assert 'v0.8.0' in note
+    assert '--latest' in note
+
+
+def test_staleness_note_is_silent_when_current_or_offline(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(sync, 'latest_tag', lambda _: 'v0.8.0')
+    assert sync.staleness_note(version.REPO_URL, 'v0.8.0') == ''
+    assert sync.staleness_note(version.REPO_URL, 'v0.9.0') == ''
+
+    monkeypatch.setattr(sync, 'latest_tag', lambda _: '')
+    assert sync.staleness_note(version.REPO_URL, 'v0.7.0') == ''
+
+
+def test_an_explicit_target_asks_the_remote_nothing() -> None:
+    assert not sync.targets_installed(['--to', 'v0.4.0'])
+    assert not sync.targets_installed(['--to=v0.4.0'])
+    assert not sync.targets_installed(['--latest'])
+    assert sync.targets_installed(['--write'])
+
+
+def test_main_warns_but_still_reports_when_behind(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    root = tmp_path / 'projects'
+    _make_repo(root, 'alpha', CONFIG)
+    monkeypatch.setattr(sync, 'latest_tag', lambda _: 'v99.0.0')
+
+    code = sync.main([str(root)])
+
+    captured = capsys.readouterr()
+    assert code == 0
+    assert 'v99.0.0 is the newest tag' in captured.err
+    assert 'alpha' in captured.out
+
+
 def test_help_exits_zero(capsys: pytest.CaptureFixture[str]) -> None:
     assert sync.main(['--help']) == 0
     assert 'gag sync' in capsys.readouterr().out

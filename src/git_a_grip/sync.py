@@ -12,6 +12,12 @@ drifts until a hook changes behaviour and only some repos notice.
     gag sync --latest           take the target from the source's git tags
     gag sync ~/projects ~/work  trees to scan (default: this repo's parent)
 
+The default target is whatever version is installed, which is a stand-in for
+"the current release" and stops being one the moment a new tag lands. So the
+default run also asks the source for its newest tag and says when the install
+is behind it -- otherwise `gag sync` reports a fleet "already at v0.7.0" in
+the same confident sentence it would use if v0.7.0 were still the release.
+
 The rewrite is textual, not a YAML round-trip: `yaml.safe_load` loses the
 comments and the key order a hand-written config is full of, and handing
 somebody back a reformatted config is a worse trade than the one line they
@@ -38,6 +44,9 @@ gag sync -- pin one hook source to one rev across every local repo.
   gag sync --repo URL     hook source to sync (default: git-a-grip)
   gag sync --latest       resolve the target from the source's git tags
   gag sync --help         show this
+
+Without --to or --latest the target is the installed version, and sync warns
+when the source has a newer tag than the one you have installed.
 """
 
 # `  - repo: https://github.com/...` followed, within the block, by `rev:`.
@@ -158,6 +167,29 @@ def latest_tag(source: str) -> str:
     return max(tags, key=version.parts)
 
 
+def targets_installed(args: list[str]) -> bool:
+    """Whether the rev came from the install rather than from a flag."""
+    return not _flag_value(args, '--to') and '--latest' not in args
+
+
+def staleness_note(source: str, rev: str) -> str:
+    """Warn when `rev` is behind the newest tag the source publishes.
+
+    Empty when the remote cannot be reached or has no tags: an offline run
+    still has a useful answer to give about the local fleet, and refusing to
+    give it would be a worse trade than omitting the warning.
+    """
+    latest = latest_tag(source)
+    if not latest or version.compare(rev, latest) >= 0:
+        return ''
+    return (
+        f'sync: installed {rev}, but {latest} is the newest tag at '
+        f'{source}.\n'
+        f'      Re-run with --latest to pin {latest} instead, or upgrade '
+        f'{version.DIST_NAME}.\n'
+    )
+
+
 def render(
     changes: list[Change],
     source: str,
@@ -238,6 +270,11 @@ def main(argv: list[str] | None = None) -> int:
             f'sync: not a directory: {", ".join(str(p) for p in missing)}\n',
         )
         return 2
+
+    # After the argument errors: a run that is going to exit 2 has no use
+    # for a network round trip.
+    if targets_installed(args):
+        sys.stderr.write(staleness_note(source, rev))
 
     changes = plan(paths or audit.default_roots(), source, rev)
     wrote = '--write' in args
