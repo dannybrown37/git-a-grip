@@ -250,7 +250,12 @@ def _header(paint: Style) -> str:
     installed = version.installed_version()
     return '\n'.join(
         [
-            paint(f'git-a-grip {installed} -- pre-commit hooks', 'bold'),
+            # No version in the title. This block is embedded in the README,
+            # where the only version anyone should read is the `rev` they
+            # paste -- and that one commitizen rewrites in the bump commit
+            # (`version_files`). A second copy up here has no such owner, so
+            # it drifts to whatever the last contributor had installed.
+            paint('git-a-grip -- pre-commit hooks', 'bold'),
             '',
             paint('Turn one on in .pre-commit-config.yaml:', 'dim'),
             '',

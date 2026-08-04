@@ -89,6 +89,18 @@ def test_the_header_pins_the_installed_version(
     assert version.REPO_URL in out
 
 
+def test_the_header_states_the_version_exactly_once(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    # A second copy of the version in the title line had no owner: commitizen
+    # rewrites the `rev` at bump time and left the title a release behind in
+    # the committed README.
+    assert hook_docs.main([]) == 0
+
+    out = capsys.readouterr().out
+    assert out.count(version.installed_version()) == 1
+
+
 def test_naming_a_hook_documents_only_that_one(
     capsys: pytest.CaptureFixture[str],
 ) -> None:

@@ -143,7 +143,7 @@ hook keeping `gag hooks` output honest:
 <!-- hooks:start -->
 
 ```
-git-a-grip 0.8.0 -- pre-commit hooks
+git-a-grip -- pre-commit hooks
 
 Turn one on in .pre-commit-config.yaml:
 
