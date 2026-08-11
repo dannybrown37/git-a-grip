@@ -19,6 +19,7 @@ repos:
       - id: commitizen-early
       - id: ruff-check
       - id: ruff-format
+      - id: mypy
       - id: embed-tree
       - id: embed-command
         args: ['--marker=help', '--command=mytool --help']
@@ -30,15 +31,16 @@ repos:
 ```
 
 Nothing to install. Your project needs no `ruff`, `cz` or `uv` on PATH —
-pre-commit builds the env. (`pytest`, `eslint`, `tsc` and `vitest` are the
-exceptions: they must run inside *your* project's environment, so they shell
-out to `uv run` / your package manager.)
+pre-commit builds the env. (`pytest`, `mypy`, `eslint`, `tsc` and `vitest`
+are the exceptions: they must run inside *your* project's environment, so
+they shell out to `uv run` / your package manager.)
 
 | Hook | What it does for you |
 | --- | --- |
 | `commitizen-early` | Rejects a bad commit message in ~0.3s, instead of after the whole hook suite has run. Pair with the upstream `commitizen` hook for the cases it can't see (editor, merge, rebase). |
 | `ruff-check` | `ruff check --fix`, with fixes **re-staged** — no dirty tree to `git add` and amend. |
 | `ruff-format` | `ruff format`, likewise re-staged. |
+| `mypy` | Type-checks *the project*, in your project's env so mypy can import your dependencies instead of reporting on the imports. Names no files, so what it checks is what your mypy config says — not whichever files you happened to touch. `--runner=uv run ty check` swaps the engine. |
 | `pytest` | Your test suite, from the repo root, in your project's env. `args: ['--runner=uv run --extra api pytest', ...]` to change the runner. |
 | `embed-tree` | Keeps a file tree in your README true. Drop `<!-- tree:start -->` / `<!-- tree:end -->` in, and it regenerates and re-stages on every commit. Contents come from `git ls-files`, so it's exactly what's committed. (Was `readme-tree`; the old id still works.) |
 | `embed-command` | Keeps a command's output — `mytool --help`, `make help` — true in your README. Name the command in `args`; nothing is discovered and run on its own. |
@@ -69,9 +71,9 @@ match, since files outside that subdirectory are skipped anyway:
 
 `--runner=` means different things either side of that list. For `eslint` and
 `tsc` it names only the package manager the tool is run *through*; for
-`vitest` and `pytest` it replaces the command outright, because `npm test`
-chooses its own test tool and appending `vitest run` to it would be wrong —
-write `--runner=npm test -- --run` in full.
+`vitest`, `pytest` and `mypy` it replaces the command outright, because `npm
+test` chooses its own test tool and appending `vitest run` to it would be
+wrong — write `--runner=npm test -- --run` in full.
 
 The `embed-*` hooks and `regen-file` are the exception: their `args` configure
 the hook itself (`--marker=`, `--command=`, `--file=`, `--depth=`, `--exit=`).
@@ -165,6 +167,7 @@ repos:
   embed-command     Keep a command's output (`--help`) true in the README.
   embed-tree        Regenerate the README file tree, and re-stage it.
   eslint            Lint with the project's own eslint, re-staging fixes.
+  mypy              Type-check the project in its own environment.
   pytest            Run the repo's tests through its own environment.
   regen-file        Run a generator script, and re-stage what it rewrote.
   ruff-check        Lint with `ruff check --fix`, re-staging what it fixed.
@@ -223,7 +226,9 @@ git-a-grip/
 |       |-- embed_tree.py
 |       |-- hook_docs.py
 |       |-- hooks.py
+|       |-- mypy_hook.py
 |       |-- node_hooks.py
+|       |-- project_env.py
 |       |-- pytest_hook.py
 |       |-- regen_file.py
 |       |-- restage.py
@@ -239,8 +244,10 @@ git-a-grip/
 |   |-- test_embed_tree.py
 |   |-- test_hook_docs.py
 |   |-- test_hooks.py
+|   |-- test_mypy_hook.py
 |   |-- test_node_hooks.py
 |   |-- test_packaging.py
+|   |-- test_project_env.py
 |   |-- test_pytest_hook.py
 |   |-- test_regen_file.py
 |   |-- test_restage.py

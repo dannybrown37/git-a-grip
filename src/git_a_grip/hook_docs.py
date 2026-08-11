@@ -88,6 +88,30 @@ DOCS: dict[str, HookDoc] = {
         ),
         config=['- id: ruff-format'],
     ),
+    'mypy': HookDoc(
+        name='Mypy',
+        summary='Type-check the project in its own environment.',
+        description=(
+            'Type-check the project with mypy, through a runner that '
+            "resolves the project's own environment (`uv run mypy` by "
+            'default). Passes no targets of its own, so the hook checks '
+            'what `mypy` checks by hand.'
+        ),
+        config=[
+            '- id: mypy',
+            "  args: ['--runner=uv run --group typing mypy']  # optional",
+        ],
+        notes=(
+            'Runs in your project, not in the env pre-commit built: a type '
+            'checker that cannot import your dependencies reports on the '
+            'imports instead of on your code. It names no files, so mypy '
+            'takes them from `files`/`packages`/`modules` in your mypy '
+            'config -- which is what makes the hook and the terminal agree. '
+            'Naming them in `args` instead works and lets the two diverge. '
+            'Point `--runner=` at `uv run pyright` or `uv run ty check` to '
+            'swap the engine.'
+        ),
+    ),
     'embed-tree': HookDoc(
         name='README file tree',
         summary='Regenerate the README file tree, and re-stage it.',
@@ -359,13 +383,16 @@ def main(argv: list[str]) -> int:
         return 0
 
     wanted = argv[0]
-    doc = DOCS.get(wanted)
-    if doc is None:
+    # Not `doc`: the --all branch above binds that name to a HookDoc, and a
+    # second binding of `HookDoc | None` is the kind of shadowing a type
+    # checker is right to complain about.
+    found = DOCS.get(wanted)
+    if found is None:
         known = ', '.join(sorted(DOCS))
         sys.stderr.write(
             f'gag hooks: no such hook: {wanted}\nKnown hooks: {known}\n',
         )
         return 2
 
-    sys.stdout.write(_entry(wanted, doc, paint))
+    sys.stdout.write(_entry(wanted, found, paint))
     return 0

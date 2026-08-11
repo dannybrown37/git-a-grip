@@ -50,6 +50,13 @@ repos:
         types: [python]
         require_serial: true
 
+      - id: mypy
+        name: Mypy
+        entry: uv run python -m git_a_grip.hooks mypy
+        language: system
+        types: [python]
+        pass_filenames: false
+
       - id: embed-tree
         name: README file tree
         entry: uv run python -m git_a_grip.hooks embed-tree

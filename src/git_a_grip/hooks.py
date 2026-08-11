@@ -17,7 +17,8 @@ import sys
 from collections.abc import Callable
 
 from git_a_grip import commitizen_early, embed_command, embed_tree
-from git_a_grip import node_hooks, pytest_hook, regen_file, ruff_hooks
+from git_a_grip import mypy_hook, node_hooks, pytest_hook, regen_file
+from git_a_grip import ruff_hooks
 
 Hook = Callable[[list[str]], int]
 
@@ -28,6 +29,7 @@ HOOKS: dict[str, Hook] = {
     'regen-file': regen_file.main,
     'ruff-check': lambda argv: ruff_hooks.run('check', ['--fix', *argv]),
     'ruff-format': lambda argv: ruff_hooks.run('format', argv),
+    'mypy': mypy_hook.main,
     'eslint': node_hooks.eslint,
     'tsc': node_hooks.tsc,
     'vitest': node_hooks.vitest,

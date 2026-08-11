@@ -35,6 +35,19 @@
   additional_dependencies: [ruff>=0.6]
   require_serial: true
 
+- id: mypy
+  name: Mypy
+  description: >-
+    Type-check the project with mypy, through a runner that resolves the
+    project's own environment (`uv run mypy` by default). Passes no targets
+    of its own, so the hook checks what `mypy` checks by hand.
+  entry: python -m git_a_grip.hooks mypy
+  language: python
+  # Same reasoning as tsc: the tool is told what to check by the project's
+  # own config, never by the list of files that happened to change.
+  types: [python]
+  pass_filenames: false
+
 - id: embed-tree
   name: README file tree
   description: >-

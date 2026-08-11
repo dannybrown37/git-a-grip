@@ -16,50 +16,23 @@ straight to pytest:
 Two details that a hand-rolled `entry:` usually gets wrong: it runs from the
 repo root rather than wherever git was invoked, and it drops the VIRTUAL_ENV
 that pre-commit exports for its own hook env, which would otherwise point the
-runner at an environment holding none of the project's dependencies.
+runner at an environment holding none of the project's dependencies. Both
+live in `project_env`, which the `mypy` hook needs for the same reasons.
 """
 
 from __future__ import annotations
 
-import os
 import subprocess
 import sys
 
+from git_a_grip.project_env import clean_env, repo_root, split_runner
+
 DEFAULT_RUNNER = 'uv run pytest'
-_RUNNER_FLAG = '--runner='
-# pre-commit exports these for the isolated env it built for *this* package.
-# Leaking them into the runner would shadow the project's own environment.
-_INHERITED_ENV_VARS = ('VIRTUAL_ENV', 'PYTHONHOME', 'PYTHONPATH')
 
 
 def split_args(argv: list[str]) -> tuple[list[str], list[str]]:
     """Split argv into the runner command and the arguments for pytest."""
-    runner = DEFAULT_RUNNER
-    rest: list[str] = []
-    for arg in argv:
-        if arg.startswith(_RUNNER_FLAG):
-            runner = arg[len(_RUNNER_FLAG) :]
-        else:
-            rest.append(arg)
-    return runner.split(), rest
-
-
-def repo_root() -> str:
-    """Return the top level of the working tree."""
-    return subprocess.run(
-        ['git', 'rev-parse', '--show-toplevel'],  # noqa: S607
-        capture_output=True,
-        text=True,
-        check=False,
-    ).stdout.strip()
-
-
-def clean_env() -> dict[str, str]:
-    """Return the environment minus pre-commit's own venv pointers."""
-    env = dict(os.environ)
-    for name in _INHERITED_ENV_VARS:
-        env.pop(name, None)
-    return env
+    return split_runner(argv, DEFAULT_RUNNER)
 
 
 def main(argv: list[str]) -> int:
