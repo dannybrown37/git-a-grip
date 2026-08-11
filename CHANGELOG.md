@@ -1,3 +1,9 @@
+## v0.10.0 (2026-08-11)
+
+### Feat
+
+- add a mypy hook with dogfooding
+
 ## v0.9.0 (2026-08-04)
 
 ### Feat
