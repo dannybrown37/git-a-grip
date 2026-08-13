@@ -54,6 +54,8 @@ jobs:
             gag sync --help
           uv run --isolated --no-project --with dist/*.whl \
             gag hooks --help
+          uv run --isolated --no-project --with dist/*.whl \
+            gag privacy --help
 
       # The hooks are the other half of the split. try-repo builds them from
       # .pre-commit-hooks.yaml in the isolated env a consumer would get, so

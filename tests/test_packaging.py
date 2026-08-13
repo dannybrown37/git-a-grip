@@ -114,7 +114,7 @@ def test_every_gag_subcommand_is_reachable() -> None:
     # would break `gag` for every command, not just its own.
     from git_a_grip import cli
 
-    assert set(cli.COMMANDS) == {'hooks', 'audit', 'sync'}
+    assert set(cli.COMMANDS) == {'hooks', 'audit', 'sync', 'privacy'}
 
 
 def test_base_dependencies_carry_no_hook_only_tools() -> None:

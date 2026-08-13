@@ -112,6 +112,35 @@ DOCS: dict[str, HookDoc] = {
             'swap the engine.'
         ),
     ),
+    'privacy-terms': HookDoc(
+        name='Privacy terms',
+        summary='Block a commit adding one of your own private terms.',
+        description=(
+            'Block a commit that adds a line matching one of your own '
+            'private terms -- an employer, a client, a hostname -- read '
+            'from a file only you have, never from the repo.'
+        ),
+        config=[
+            '- id: privacy-terms',
+            '  args: [--word]  # optional',
+        ],
+        notes=(
+            'A secret scanner finds credentials because a credential looks '
+            'like one. These are ordinary words, sensitive only because of '
+            'who typed them, so the terms live outside the tree: the first '
+            'of `--terms-file=`, `$GAG_PRIVACY_TERMS_FILE`, '
+            '`$XDG_CONFIG_HOME/git-a-grip/privacy-terms`, or '
+            '`<repo>/.git/privacy-terms`. Manage them with `gag privacy`. '
+            'With no terms configured it warns and passes, so the hook '
+            'survives a machine that never set it up; a terms file the rest '
+            'of the machine can read fails instead, because believing you '
+            'are covered is worse than knowing you are not. Only added '
+            'lines are read, and the output names the file and line but '
+            'never the match -- it ends up in CI logs. `--word` requires a '
+            'word boundary, for a short term that would otherwise match '
+            'inside other words.'
+        ),
+    ),
     'embed-tree': HookDoc(
         name='README file tree',
         summary='Regenerate the README file tree, and re-stage it.',

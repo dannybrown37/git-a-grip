@@ -28,6 +28,7 @@ repos:
       - id: pytest
         args: [tests/, -q]
       - id: vitest
+      - id: privacy-terms
 ```
 
 Nothing to install. Your project needs no `ruff`, `cz` or `uv` on PATH —
@@ -47,6 +48,7 @@ they shell out to `uv run` / your package manager.)
 | `regen-file` | Replaces `bash -c 'run-the-script && git add the-file'`. Runs the generator you name and re-stages the files you name — only the ones whose contents actually moved, and it fails the commit if the script quietly stopped writing one. Use `embed-command` instead when the script owns only a marked block. |
 | `eslint` | `eslint --fix`, re-staged, `--max-warnings=0` by default so warnings can't pile up forever. `--dir=web` for a monorepo. |
 | `tsc` | Type-checks *the project*, never bare filenames — given filenames, tsc silently ignores your `tsconfig.json`. `--dir=web` for a monorepo. |
+| `privacy-terms` | Blocks a commit that *adds* a line containing one of your own private terms — an employer, a client, an internal hostname. A secret scanner can't find these; they're ordinary words, sensitive only because of who typed them. The terms live outside the tree (see [`gag privacy`](#gag-privacy--the-terms-the-privacy-terms-hook-blocks-on)), so nothing sensitive is committed to configure it. Unconfigured, it warns and passes. |
 | `vitest` | `vitest run`, never the watch mode a bare `vitest` starts — that hangs the commit with no clue why. Sets `CI=true`, so a missing snapshot fails instead of being written and committed. |
 
 Anything in `args` is passed through to the underlying tool. Pin your own
@@ -143,6 +145,62 @@ The plan is still printed — the warning says the target may not be the one
 you want, not that the answer is useless. An unreachable remote skips the
 check silently, so `gag sync` still works offline.
 
+### `gag privacy` — the terms the `privacy-terms` hook blocks on
+
+A secret scanner finds credentials. It cannot find the strings that are only
+sensitive because of *who typed them* — an employer, a client, an internal
+hostname, a relative's name. Those are yours, so they never live in the repo:
+
+```bash
+gag privacy                         # status, then pick an action
+gag privacy add                     # prompts, echoing, so typos show
+gag privacy add "acme corp"         # or as an argument, for scripts
+gag privacy list                    # masked: `da******wn`
+gag privacy list --reveal           # in full, when you mean it
+gag privacy path                    # the file in use, for `$EDITOR "$(...)"`
+gag privacy check some_file.py      # what the hook would flag, no commit
+gag privacy check                   # or pick the file from the repo
+gag privacy remove                  # pick from the terms you have
+gag privacy remove "acme corp"
+```
+
+Anything it needs and wasn't given, it asks for — `fzf` when you have it,
+a numbered list when you don't (`GAG_NO_FZF=1` forces the list). Every
+prompt has a flag that skips it, and an interactive run finishes by
+printing the one-liner you could have typed:
+
+```console
+$ gag privacy remove
+  1) acme corp
+  2) dannybrown
+remove: (numbers, comma-separated, blank to cancel) 1
+Removed 1 from /home/you/.config/git-a-grip/privacy-terms
+
+Next time, in one line:
+  gag privacy remove 'acme corp'
+```
+
+Off a terminal nothing prompts: it names the argument that was missing and
+exits 2, so a CI job fails in a line instead of hanging until its timeout.
+
+Terms are read from the first of these that exists: `--terms-file=`,
+`$GAG_PRIVACY_TERMS_FILE`, `$XDG_CONFIG_HOME/git-a-grip/privacy-terms`, then
+`<repo>/.git/privacy-terms`. The third is the one to use — one file, every
+repo on the machine covered. `--repo` writes to the fourth instead, for a
+term that belongs to one project and shouldn't follow you around; note that
+deleting that clone deletes the terms with it.
+
+The file is line-delimited text, `#` comments allowed, and it is read
+literally — never sourced. `gag privacy` creates it `0600` in a `0700`
+directory and **refuses to read one the rest of the machine can read**: a
+terms file at `0644` leaves you believing you're covered while the terms sit
+in the open. A symlinked file is followed and judged at the far end, so
+keeping the real file in your dotfiles works.
+
+Nothing here prints a term in full unless you ask. `add` reports a count,
+`list` masks, and the hook names the file and line but never the match —
+this output goes to scrollback and into CI logs.
+
 ### `gag hooks` — the hook reference
 
 The table above, in full, from your installed version. Colorized for the
@@ -168,6 +226,7 @@ repos:
   embed-tree        Regenerate the README file tree, and re-stage it.
   eslint            Lint with the project's own eslint, re-staging fixes.
   mypy              Type-check the project in its own environment.
+  privacy-terms     Block a commit adding one of your own private terms.
   pytest            Run the repo's tests through its own environment.
   regen-file        Run a generator script, and re-stage what it rewrote.
   ruff-check        Lint with `ruff check --fix`, re-staging what it fixed.
@@ -228,6 +287,10 @@ git-a-grip/
 |       |-- hooks.py
 |       |-- mypy_hook.py
 |       |-- node_hooks.py
+|       |-- pick.py
+|       |-- privacy.py
+|       |-- privacy_hook.py
+|       |-- privacy_terms.py
 |       |-- project_env.py
 |       |-- pytest_hook.py
 |       |-- regen_file.py
@@ -247,6 +310,10 @@ git-a-grip/
 |   |-- test_mypy_hook.py
 |   |-- test_node_hooks.py
 |   |-- test_packaging.py
+|   |-- test_pick.py
+|   |-- test_privacy.py
+|   |-- test_privacy_hook.py
+|   |-- test_privacy_terms.py
 |   |-- test_project_env.py
 |   |-- test_pytest_hook.py
 |   |-- test_regen_file.py

@@ -17,7 +17,8 @@ import sys
 from collections.abc import Callable
 
 from git_a_grip import commitizen_early, embed_command, embed_tree
-from git_a_grip import mypy_hook, node_hooks, pytest_hook, regen_file
+from git_a_grip import mypy_hook, node_hooks, privacy_hook, pytest_hook
+from git_a_grip import regen_file
 from git_a_grip import ruff_hooks
 
 Hook = Callable[[list[str]], int]
@@ -34,6 +35,7 @@ HOOKS: dict[str, Hook] = {
     'tsc': node_hooks.tsc,
     'vitest': node_hooks.vitest,
     'pytest': pytest_hook.main,
+    'privacy-terms': privacy_hook.main,
 }
 
 # Ids that shipped under an older name. A consuming repo pins a rev, so its
