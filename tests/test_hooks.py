@@ -2,12 +2,9 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+import pytest
 
 from git_a_grip import hooks
-
-if TYPE_CHECKING:
-    import pytest
 
 BAD_ARGS_CODE = 2
 STUB_CODE = 7
@@ -46,19 +43,25 @@ def test_the_rest_of_the_argv_reaches_the_hook(
     assert seen == [['tests/', '-q']]
 
 
+@pytest.mark.parametrize(
+    ('old', 'current'),
+    sorted(hooks.ALIASES.items()),
+)
 def test_an_old_id_still_runs_and_says_so(
+    old: str,
+    current: str,
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     # A consumer pins a rev, so their config outlives the rename. The old id
     # has to keep working, and has to tell them it moved.
-    monkeypatch.setitem(hooks.HOOKS, 'embed-tree', lambda _argv: STUB_CODE)
+    monkeypatch.setitem(hooks.HOOKS, current, lambda _argv: STUB_CODE)
 
-    assert hooks.main(['readme-tree']) == STUB_CODE
+    assert hooks.main([old]) == STUB_CODE
 
     err = capsys.readouterr().err
-    assert 'readme-tree' in err
-    assert 'embed-tree' in err
+    assert old in err
+    assert current in err
 
 
 def test_ruff_check_always_gets_fix(monkeypatch: pytest.MonkeyPatch) -> None:

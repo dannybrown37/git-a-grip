@@ -1,4 +1,4 @@
-"""The store behind the `privacy-terms` hook: where the terms live.
+"""The store behind the `block-private-terms` hook: where the terms live.
 
 A secret scanner finds credentials because credentials look like credentials
 -- high entropy, a known prefix, a shape a regex can name. The strings this
@@ -25,7 +25,7 @@ The file is line-delimited text, read literally. It is never sourced or
 evaluated: a config format that executes is a worse hazard than the one this
 module exists to remove.
 
-Permissions are enforced rather than suggested. A privacy-terms file the
+Permissions are enforced rather than suggested. A terms file the
 rest of the machine can read is worse than no file at all -- the user
 believes they are covered while the terms sit in the open -- so a loose mode
 is a hard error, not a warning. Symlinks are followed first and judged at

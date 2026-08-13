@@ -77,9 +77,9 @@ repos:
         files: ^(src/git_a_grip/(hook_docs|version)\.py|README\.md)$
         pass_filenames: false
 
-      - id: privacy-terms
+      - id: block-private-terms
         name: Privacy terms
-        entry: uv run python -m git_a_grip.hooks privacy-terms
+        entry: uv run python -m git_a_grip.hooks block-private-terms
         language: system
         always_run: true
         pass_filenames: false

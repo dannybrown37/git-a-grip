@@ -41,9 +41,9 @@ from git_a_grip import privacy_terms
 from git_a_grip.privacy_terms import PrivacyTermsError
 
 USAGE = """\
-usage: privacy-terms [--terms-file=PATH] [--word] [file ...]
+usage: block-private-terms [--terms-file=PATH] [--word] [file ...]
 
-Scans the staged diff for terms in your privacy-terms file. With no files,
+Scans the staged diff for terms in your privacy terms file. With no files,
 the whole staged diff. See `gag privacy --help` to manage the terms.
 """
 
@@ -126,14 +126,14 @@ def main(argv: list[str] | None = None) -> int:
         path = privacy_terms.resolve(explicit)
         terms = privacy_terms.read(path) if path is not None else []
     except PrivacyTermsError as error:
-        sys.stderr.write(f'privacy-terms: {error}\n')
+        sys.stderr.write(f'block-private-terms: {error}\n')
         return 1
 
     if not terms:
         # Loud enough to notice, passing so that an unconfigured machine
         # does not make this the hook everyone removes.
         sys.stderr.write(
-            'privacy-terms: no terms configured — this commit was not '
+            'block-private-terms: no terms configured — this commit was not '
             'checked. Set them up with `gag privacy add`.\n',
         )
         return 0

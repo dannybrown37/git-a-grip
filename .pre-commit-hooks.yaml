@@ -129,13 +129,13 @@
   files: ^(src/|tests/).*
   pass_filenames: false
 
-- id: privacy-terms
-  name: Privacy terms
+- id: block-private-terms
+  name: Block private terms
   description: >-
     Block a commit that adds a line matching one of your own private terms
     -- an employer, a client, a hostname -- read from a file only you have,
     never from the repo.
-  entry: python -m git_a_grip.hooks privacy-terms
+  entry: python -m git_a_grip.hooks block-private-terms
   language: python
   # The staged diff is the unit, not the file: what matters is the lines
   # this commit adds, and a file list would say nothing about which those

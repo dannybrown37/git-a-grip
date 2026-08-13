@@ -112,8 +112,8 @@ DOCS: dict[str, HookDoc] = {
             'swap the engine.'
         ),
     ),
-    'privacy-terms': HookDoc(
-        name='Privacy terms',
+    'block-private-terms': HookDoc(
+        name='Block private terms',
         summary='Block a commit adding one of your own private terms.',
         description=(
             'Block a commit that adds a line matching one of your own '
@@ -121,7 +121,7 @@ DOCS: dict[str, HookDoc] = {
             'from a file only you have, never from the repo.'
         ),
         config=[
-            '- id: privacy-terms',
+            '- id: block-private-terms',
             '  args: [--word]  # optional',
         ],
         notes=(

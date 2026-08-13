@@ -1,4 +1,4 @@
-"""`gag privacy`: manage the terms the `privacy-terms` hook matches on.
+"""`gag privacy`: manage the terms the `block-private-terms` hook matches on.
 
 The terms are the thing being protected, which makes every part of this
 command's interface a privacy decision rather than a convenience one:
@@ -357,9 +357,8 @@ def _no_action(options: _Options) -> int:
     return code
 
 
-def main(argv: list[str] | None = None) -> int:
-    """Run an action against the terms file. 0 means it did what was asked."""
-    args = sys.argv[1:] if argv is None else argv
+def _early_exit(args: list[str]) -> int | None:
+    """Answer --help/--version before anything else can fail on parsing."""
     if '--help' in args or '-h' in args:
         sys.stdout.write(USAGE)
         return 0
@@ -368,7 +367,28 @@ def main(argv: list[str] | None = None) -> int:
         # which level of a command tree owns the flag they just typed.
         sys.stdout.write(f'{version.installed_version()}\n')
         return 0
+    return None
 
+
+def main(argv: list[str] | None = None) -> int:
+    """Run an action against the terms file. 0 means it did what was asked."""
+    args = sys.argv[1:] if argv is None else argv
+    early = _early_exit(args)
+    if early is not None:
+        return early
+
+    try:
+        return _dispatch(args)
+    except PrivacyTermsError as error:
+        sys.stderr.write(f'privacy: {error}\n')
+        return 2
+    except pick.NotInteractiveError as error:
+        sys.stderr.write(f'privacy: {error}\n\n{USAGE}')
+        return 2
+
+
+def _dispatch(args: list[str]) -> int:
+    """Turn parsed arguments into exactly one action call."""
     options = _Options(args)
     if options.unknown:
         sys.stderr.write(
@@ -389,14 +409,7 @@ def main(argv: list[str] | None = None) -> int:
         sys.stderr.write(USAGE)
         return 2
 
-    try:
-        return _ACTIONS[name](options)
-    except PrivacyTermsError as error:
-        sys.stderr.write(f'privacy: {error}\n')
-        return 2
-    except pick.NotInteractiveError as error:
-        sys.stderr.write(f'privacy: {error}\n\n{USAGE}')
-        return 2
+    return _ACTIONS[name](options)
 
 
 def main_cli() -> None:

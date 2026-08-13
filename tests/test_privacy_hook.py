@@ -158,7 +158,7 @@ class TestMain:
     ) -> None:
         assert privacy_hook.main(['--help']) == 0
 
-        assert 'usage: privacy-terms' in capsys.readouterr().out
+        assert 'usage: block-private-terms' in capsys.readouterr().out
 
 
 class TestUnconfigured:

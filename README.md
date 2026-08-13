@@ -28,7 +28,7 @@ repos:
       - id: pytest
         args: [tests/, -q]
       - id: vitest
-      - id: privacy-terms
+      - id: block-private-terms
 ```
 
 Nothing to install. Your project needs no `ruff`, `cz` or `uv` on PATH —
@@ -48,7 +48,7 @@ they shell out to `uv run` / your package manager.)
 | `regen-file` | Replaces `bash -c 'run-the-script && git add the-file'`. Runs the generator you name and re-stages the files you name — only the ones whose contents actually moved, and it fails the commit if the script quietly stopped writing one. Use `embed-command` instead when the script owns only a marked block. |
 | `eslint` | `eslint --fix`, re-staged, `--max-warnings=0` by default so warnings can't pile up forever. `--dir=web` for a monorepo. |
 | `tsc` | Type-checks *the project*, never bare filenames — given filenames, tsc silently ignores your `tsconfig.json`. `--dir=web` for a monorepo. |
-| `privacy-terms` | Blocks a commit that *adds* a line containing one of your own private terms — an employer, a client, an internal hostname. A secret scanner can't find these; they're ordinary words, sensitive only because of who typed them. The terms live outside the tree (see [`gag privacy`](#gag-privacy--the-terms-the-privacy-terms-hook-blocks-on)), so nothing sensitive is committed to configure it. Unconfigured, it warns and passes. |
+| `block-private-terms` | Blocks a commit that *adds* a line containing one of your own private terms — an employer, a client, an internal hostname. A secret scanner can't find these; they're ordinary words, sensitive only because of who typed them. The terms live outside the tree (see [`gag privacy`](#gag-privacy--the-terms-the-block-private-terms-hook-blocks-on)), so nothing sensitive is committed to configure it. Unconfigured, it warns and passes. |
 | `vitest` | `vitest run`, never the watch mode a bare `vitest` starts — that hangs the commit with no clue why. Sets `CI=true`, so a missing snapshot fails instead of being written and committed. |
 
 Anything in `args` is passed through to the underlying tool. Pin your own
@@ -145,7 +145,7 @@ The plan is still printed — the warning says the target may not be the one
 you want, not that the answer is useless. An unreachable remote skips the
 check silently, so `gag sync` still works offline.
 
-### `gag privacy` — the terms the `privacy-terms` hook blocks on
+### `gag privacy` — the terms the `block-private-terms` hook blocks on
 
 A secret scanner finds credentials. It cannot find the strings that are only
 sensitive because of *who typed them* — an employer, a client, an internal
@@ -221,18 +221,18 @@ repos:
       - id: <one of the below>
       - id: <...any number of others>
 
-  commitizen-early  Reject a bad commit message before the slow hooks run.
-  embed-command     Keep a command's output (`--help`) true in the README.
-  embed-tree        Regenerate the README file tree, and re-stage it.
-  eslint            Lint with the project's own eslint, re-staging fixes.
-  mypy              Type-check the project in its own environment.
-  privacy-terms     Block a commit adding one of your own private terms.
-  pytest            Run the repo's tests through its own environment.
-  regen-file        Run a generator script, and re-stage what it rewrote.
-  ruff-check        Lint with `ruff check --fix`, re-staging what it fixed.
-  ruff-format       Format with `ruff format`, re-staging what it rewrote.
-  tsc               Type-check the project with the project's own tsc.
-  vitest            Run the project's vitest suite once, never in watch mode.
+  block-private-terms  Block a commit adding one of your own private terms.
+  commitizen-early     Reject a bad commit message before the slow hooks run.
+  embed-command        Keep a command's output (`--help`) true in the README.
+  embed-tree           Regenerate the README file tree, and re-stage it.
+  eslint               Lint with the project's own eslint, re-staging fixes.
+  mypy                 Type-check the project in its own environment.
+  pytest               Run the repo's tests through its own environment.
+  regen-file           Run a generator script, and re-stage what it rewrote.
+  ruff-check           Lint with `ruff check --fix`, re-staging what it fixed.
+  ruff-format          Format with `ruff format`, re-staging what it rewrote.
+  tsc                  Type-check the project with the project's own tsc.
+  vitest               Run the project's vitest suite once, never in watch mode.
 
 gag hooks <id> for one in full, gag hooks --all for all of them.
 ```

@@ -30,7 +30,7 @@ COMMANDS: dict[str, tuple[Command, str]] = {
     ),
     'privacy': (
         privacy.main,
-        'Manage the terms the privacy-terms hook blocks commits on.',
+        'Manage the terms the block-private-terms hook blocks commits on.',
     ),
 }
 

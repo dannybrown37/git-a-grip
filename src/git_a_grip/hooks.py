@@ -35,7 +35,7 @@ HOOKS: dict[str, Hook] = {
     'tsc': node_hooks.tsc,
     'vitest': node_hooks.vitest,
     'pytest': pytest_hook.main,
-    'privacy-terms': privacy_hook.main,
+    'block-private-terms': privacy_hook.main,
 }
 
 # Ids that shipped under an older name. A consuming repo pins a rev, so its
@@ -43,6 +43,7 @@ HOOKS: dict[str, Hook] = {
 # saves every consumer a broken commit on the day they bump.
 ALIASES: dict[str, str] = {
     'readme-tree': 'embed-tree',
+    'privacy-terms': 'block-private-terms',
 }
 
 
