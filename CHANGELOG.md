@@ -1,3 +1,13 @@
+## v0.11.0 (2026-08-13)
+
+### Feat
+
+- privacy-terms hook (about to rename, but good progress here)
+
+### Fix
+
+- rename to block-private-terms, it's more descriptive
+
 ## v0.10.0 (2026-08-11)
 
 ### Feat

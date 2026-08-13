@@ -1,6 +1,6 @@
 [project]
 name = "git-a-grip"
-version = "0.10.0"
+version = "0.11.0"
 description = "Pre-commit hooks that fail fast on bad commit messages, re-stage what they fix, keep your docs true, and run your tests -- plus a cross-repo hook audit."
 requires-python = ">=3.11"
 authors = [{ name = "Danny Brown", email = "dannybrown37@gmail.com" }]
