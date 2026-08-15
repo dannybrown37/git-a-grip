@@ -14,7 +14,7 @@ Two things, from one package:
 ```yaml
 repos:
   - repo: https://github.com/dannybrown37/git-a-grip
-    rev: v0.11.1
+    rev: v0.12.0
     hooks:
       - id: commitizen-early
       - id: ruff-check
@@ -218,7 +218,7 @@ Turn one on in .pre-commit-config.yaml:
 
 repos:
   - repo: https://github.com/dannybrown37/git-a-grip
-    rev: v0.11.1
+    rev: v0.12.0
     hooks:
       - id: <one of the below>
       - id: <...any number of others>

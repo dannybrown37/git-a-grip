@@ -1,3 +1,9 @@
+## v0.12.0 (2026-08-15)
+
+### Feat
+
+- add zizmor static type checking hook with dogfooding
+
 ## v0.11.1 (2026-08-15)
 
 ### Fix
