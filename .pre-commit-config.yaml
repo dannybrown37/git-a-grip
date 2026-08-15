@@ -84,6 +84,16 @@ repos:
         always_run: true
         pass_filenames: false
 
+      - id: zizmor
+        name: Zizmor
+        # --with, because zizmor is a binary a consumer gets from
+        # additional_dependencies -- there is nothing to import, and this
+        # repo does not depend on it.
+        entry: uv run --with zizmor python -m git_a_grip.hooks zizmor
+        language: system
+        files: ^(\.github/workflows/.*\.ya?ml|(.*/)?action\.ya?ml)$
+        require_serial: true
+
       - id: tests
         name: Tests
         entry: uv run python -m git_a_grip.hooks pytest tests/ -q

@@ -12,12 +12,24 @@ on:
   push:
     tags: ['v*']
 
+# The upload is authorised by the OIDC token the publish job asks for, not
+# by anything the repo token can do.
+permissions: {}
+
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
       - uses: astral-sh/setup-uv@v7
+        with:
+          # A tag build produces the artifact that gets published, so it
+          # starts from a clean cache rather than one a branch build filled.
+          enable-cache: false
 
       # The tag is the version. Publishing anything else would put a release
       # on PyPI that no tag in this repo describes, and PyPI never lets that

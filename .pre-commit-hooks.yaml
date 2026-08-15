@@ -144,3 +144,21 @@
   # are. Runs even when nothing it could name changed.
   always_run: true
   pass_filenames: false
+
+- id: zizmor
+  name: Zizmor
+  description: >-
+    Audit GitHub Actions workflows and action definitions with zizmor, the
+    static analyser for the mistakes that leak a token -- re-staging any
+    file it rewrites when you ask it for `--fix`.
+  entry: python -m git_a_grip.hooks zizmor
+  language: python
+  # Everything zizmor collects by default, minus the remote-repo case a
+  # commit hook has no use for. Widen it if you keep workflows elsewhere.
+  files: ^(\.github/workflows/.*\.ya?ml|(.*/)?action\.ya?ml)$
+  # A binary wheel, not a dependency of the package: only this hook needs
+  # it, and the commands never call it. Pin your own with
+  # `additional_dependencies: [zizmor==x.y.z]`.
+  additional_dependencies: [zizmor>=1.0]
+  # May call `git add` under `--fix`; two copies in parallel race index.lock.
+  require_serial: true

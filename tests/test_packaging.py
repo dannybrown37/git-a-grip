@@ -20,11 +20,19 @@ ROOT = Path(__file__).resolve().parent.parent
 PYPROJECT = tomllib.loads((ROOT / 'pyproject.toml').read_text())
 HOOKS = yaml.safe_load((ROOT / '.pre-commit-hooks.yaml').read_text())
 
-RUFF_PIN = 'ruff>=0.6'
+# The tools a hook brings with it, keyed by the substring of the hook ids
+# that need one. No command imports any of them, so they must stay out of
+# the base dependencies and be declared per hook instead.
+BUNDLED_TOOLS = {'ruff': 'ruff>=0.6', 'zizmor': 'zizmor>=1.0'}
 # Every hook goes through the dispatcher, never a console script.
 PYTHON_M = 'python -m'
-# Tools no command imports, so they must not be in the base dependencies.
-HOOK_ONLY_TOOLS = ('ruff',)
+
+
+def _bundled_tool(hook_id: str) -> str | None:
+    return next(
+        (pin for key, pin in BUNDLED_TOOLS.items() if key in hook_id),
+        None,
+    )
 
 
 def _requirement_names(requirements: list[str]) -> set[str]:
@@ -120,7 +128,7 @@ def test_every_gag_subcommand_is_reachable() -> None:
 def test_base_dependencies_carry_no_hook_only_tools() -> None:
     names = _requirement_names(PYPROJECT['project']['dependencies'])
 
-    assert names.isdisjoint(HOOK_ONLY_TOOLS)
+    assert names.isdisjoint(BUNDLED_TOOLS)
 
 
 def test_commands_can_import_what_they_need() -> None:
@@ -132,22 +140,26 @@ def test_commands_can_import_what_they_need() -> None:
     assert {'commitizen', 'pyyaml'} <= names
 
 
-def test_ruff_hooks_declare_ruff_themselves() -> None:
-    ruff_hooks = [hook for hook in HOOKS if 'ruff' in hook['id']]
+def test_hooks_that_bundle_a_tool_declare_it_themselves() -> None:
+    bundling = [hook for hook in HOOKS if _bundled_tool(hook['id'])]
 
-    assert ruff_hooks
-    for hook in ruff_hooks:
-        assert hook['additional_dependencies'] == [RUFF_PIN]
+    assert {hook['id'] for hook in bundling} == {
+        'ruff-check',
+        'ruff-format',
+        'zizmor',
+    }
+    for hook in bundling:
+        assert hook['additional_dependencies'] == [_bundled_tool(hook['id'])]
 
 
-def test_hooks_extra_matches_the_hook_pin() -> None:
+def test_hooks_extra_matches_the_hook_pins() -> None:
     extra = PYPROJECT['project']['optional-dependencies']['hooks']
 
-    assert extra == [RUFF_PIN]
+    assert sorted(extra) == sorted(BUNDLED_TOOLS.values())
 
 
-def test_non_ruff_hooks_need_no_extra_dependencies() -> None:
-    others = [hook for hook in HOOKS if 'ruff' not in hook['id']]
+def test_every_other_hook_needs_no_extra_dependencies() -> None:
+    others = [hook for hook in HOOKS if not _bundled_tool(hook['id'])]
 
     assert others
     for hook in others:

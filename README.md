@@ -29,6 +29,7 @@ repos:
         args: [tests/, -q]
       - id: vitest
       - id: block-private-terms
+      - id: zizmor
 ```
 
 Nothing to install. Your project needs no `ruff`, `cz` or `uv` on PATH —
@@ -49,6 +50,7 @@ they shell out to `uv run` / your package manager.)
 | `eslint` | `eslint --fix`, re-staged, `--max-warnings=0` by default so warnings can't pile up forever. `--dir=web` for a monorepo. |
 | `tsc` | Type-checks *the project*, never bare filenames — given filenames, tsc silently ignores your `tsconfig.json`. `--dir=web` for a monorepo. |
 | `block-private-terms` | Blocks a commit that *adds* a line containing one of your own private terms — an employer, a client, an internal hostname. A secret scanner can't find these; they're ordinary words, sensitive only because of who typed them. The terms live outside the tree (see [`gag privacy`](#gag-privacy--the-terms-the-block-private-terms-hook-blocks-on)), so nothing sensitive is committed to configure it. Unconfigured, it warns and passes. |
+| `zizmor` | Audits your GitHub Actions workflows with [zizmor](https://docs.zizmor.sh) — the `pull_request_target` that checks out the PR head, the `${{ github.event.* }}` interpolated straight into a `run:` block. Checks the workflows the commit touched, and brings its own zizmor. `args: [--fix]` if you want it to rewrite, and the rewrite is re-staged like every other fix here. |
 | `vitest` | `vitest run`, never the watch mode a bare `vitest` starts — that hangs the commit with no clue why. Sets `CI=true`, so a missing snapshot fails instead of being written and committed. |
 
 Anything in `args` is passed through to the underlying tool. Pin your own
@@ -233,6 +235,7 @@ repos:
   ruff-format          Format with `ruff format`, re-staging what it rewrote.
   tsc                  Type-check the project with the project's own tsc.
   vitest               Run the project's vitest suite once, never in watch mode.
+  zizmor               Audit GitHub Actions workflows for the mistakes that leak.
 
 gag hooks <id> for one in full, gag hooks --all for all of them.
 ```
@@ -270,9 +273,10 @@ is maintained by `embed-tree`.
 ```
 git-a-grip/
 |-- .github/
-|   `-- workflows/
-|       |-- ci.yml
-|       `-- publish.yml
+|   |-- workflows/
+|   |   |-- ci.yml
+|   |   `-- publish.yml
+|   `-- zizmor.yml
 |-- src/
 |   `-- git_a_grip/
 |       |-- __init__.py
@@ -297,7 +301,8 @@ git-a-grip/
 |       |-- restage.py
 |       |-- ruff_hooks.py
 |       |-- sync.py
-|       `-- version.py
+|       |-- version.py
+|       `-- zizmor_hook.py
 |-- tests/
 |   |-- test_audit.py
 |   |-- test_cli.py
@@ -320,7 +325,8 @@ git-a-grip/
 |   |-- test_restage.py
 |   |-- test_ruff_hooks.py
 |   |-- test_sync.py
-|   `-- test_version.py
+|   |-- test_version.py
+|   `-- test_zizmor_hook.py
 |-- .gitignore
 |-- .pre-commit-config.yaml
 |-- .pre-commit-hooks.yaml

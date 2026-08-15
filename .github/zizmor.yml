@@ -1,0 +1,11 @@
+# zizmor's default `unpinned-uses` policy wants every action pinned to a
+# commit hash. This repo pins to the current major tag instead and lets
+# Dependabot move it: a hash pin here would freeze the actions at whatever
+# was current the day it was written, and the security patches these actions
+# ship are the thing being given up. `ref-pin` still rejects a floating
+# branch, which is the case the audit exists for.
+rules:
+  unpinned-uses:
+    config:
+      policies:
+        "*": ref-pin

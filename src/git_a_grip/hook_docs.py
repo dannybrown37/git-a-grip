@@ -269,6 +269,31 @@ DOCS: dict[str, HookDoc] = {
             "project's environment."
         ),
     ),
+    'zizmor': HookDoc(
+        name='Zizmor',
+        summary='Audit GitHub Actions workflows for the mistakes that leak.',
+        description=(
+            'Audit GitHub Actions workflows and action definitions with '
+            'zizmor, the static analyser for the mistakes that leak a token '
+            '-- re-staging any file it rewrites when you ask it for '
+            '`--fix`.'
+        ),
+        config=[
+            '- id: zizmor',
+            '  args: [--min-severity=medium]  # optional',
+        ],
+        notes=(
+            'Brings its own zizmor through additional_dependencies; pin '
+            'yours with `additional_dependencies: [zizmor==x.y.z]`. Checks '
+            'the workflows this commit touched, not all of them -- zizmor '
+            'audits what it is handed, so the file list pre-commit already '
+            'computed is the right one. `--fix` is yours to ask for, never '
+            'the default: rewriting a workflow is a bigger thing than '
+            'reformatting a line. Ask for it and the rewrite is re-staged '
+            'like every other fix here. Online audits want `GH_TOKEN` in '
+            'the environment; without one zizmor runs offline and says so.'
+        ),
+    ),
 }
 
 _ENTRY = 'python -m git_a_grip.hooks'

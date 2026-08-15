@@ -10,9 +10,15 @@ on:
     branches: [main]
   pull_request:
 
+# Nothing here reads or writes the repo through the token except the bump
+# job, which asks for what it needs. Every other job gets no token at all.
+permissions: {}
+
 jobs:
   check:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:
@@ -21,6 +27,11 @@ jobs:
         python-version: ['3.11', '3.13']
     steps:
       - uses: actions/checkout@v5
+        with:
+          # Nothing in this job talks to GitHub after the clone, so the
+          # token has no reason to stay in .git/config where every later
+          # step -- and anything they run -- can read it.
+          persist-credentials: false
 
       - uses: astral-sh/setup-uv@v7
         with:
@@ -95,6 +106,9 @@ jobs:
           # never fire.
           fetch-depth: 0
           token: ${{ secrets.BUMP_TOKEN }}
+          # Kept on deliberately, unlike the check job: the last step of
+          # this job pushes, and it pushes with these credentials.
+          persist-credentials: true
 
       - uses: astral-sh/setup-uv@v7
 
@@ -131,4 +145,9 @@ jobs:
 
       - name: Push bump commit and tag
         if: steps.cz.outputs.bumped == 'true'
-        run: git push origin "HEAD:${{ github.ref_name }}" --tags
+        # Through the environment, not interpolated into the script: a ref
+        # name is attacker-controllable on some triggers, and `${{ }}` in a
+        # `run:` is textual substitution before bash ever sees it.
+        env:
+          BRANCH: ${{ github.ref_name }}
+        run: git push origin "HEAD:${BRANCH}" --tags
