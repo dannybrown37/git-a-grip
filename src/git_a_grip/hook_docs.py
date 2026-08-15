@@ -93,23 +93,25 @@ DOCS: dict[str, HookDoc] = {
         summary='Type-check the project in its own environment.',
         description=(
             'Type-check the project with mypy, through a runner that '
-            "resolves the project's own environment (`uv run mypy` by "
-            'default). Passes no targets of its own, so the hook checks '
-            'what `mypy` checks by hand.'
+            "resolves the project's own environment and installs the "
+            'checker into it (`uv run --with mypy mypy` by default, so '
+            'mypy need not be declared anywhere). Passes no targets of its '
+            'own, so the hook checks what `mypy` checks by hand.'
         ),
-        config=[
-            '- id: mypy',
-            "  args: ['--runner=uv run --group typing mypy']  # optional",
-        ],
+        config=['- id: mypy'],
         notes=(
             'Runs in your project, not in the env pre-commit built: a type '
             'checker that cannot import your dependencies reports on the '
-            'imports instead of on your code. It names no files, so mypy '
-            'takes them from `files`/`packages`/`modules` in your mypy '
-            'config -- which is what makes the hook and the terminal agree. '
-            'Naming them in `args` instead works and lets the two diverge. '
-            'Point `--runner=` at `uv run pyright` or `uv run ty check` to '
-            'swap the engine.'
+            'imports instead of on your code. The default runner adds mypy '
+            'with `uv run --with`, so there is no dependency group to '
+            'declare and none to keep in step; a project that pins its own '
+            'mypy still wins. It names no files, so mypy takes them from '
+            '`files`/`packages`/`modules` in your mypy config -- which is '
+            'what makes the hook and the terminal agree, and is the one '
+            'line of config this hook does want from you. Naming them in '
+            '`args` instead works and lets the two diverge. Point '
+            '`--runner=` at `uv run --with pyright pyright` or `uv run ty '
+            'check` to swap the engine.'
         ),
     ),
     'block-private-terms': HookDoc(

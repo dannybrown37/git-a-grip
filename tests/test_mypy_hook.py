@@ -38,7 +38,21 @@ def test_it_names_no_targets_of_its_own(
     calls = _calls(monkeypatch, 0)
 
     assert mypy_hook.main([]) == 0
-    assert calls[0]['cmd'] == ['uv', 'run', 'mypy']
+    assert calls[0]['cmd'] == ['uv', 'run', '--with', 'mypy', 'mypy']
+
+
+def test_the_default_runner_installs_the_checker_itself(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # The point of `--with`: `- id: mypy` and nothing else is the whole
+    # configuration. A bare `uv run mypy` resolves the project's env but
+    # then demands the project declare a checker it never imports -- the
+    # dependency group this hook exists in order not to need.
+    calls = _calls(monkeypatch, 0)
+
+    mypy_hook.main([])
+
+    assert '--with' in calls[0]['cmd']
 
 
 def test_runner_flag_replaces_the_command_outright(
@@ -56,7 +70,15 @@ def test_args_reach_the_tool(monkeypatch: pytest.MonkeyPatch) -> None:
     calls = _calls(monkeypatch, 0)
 
     assert mypy_hook.main(['--strict', 'src']) == 0
-    assert calls[0]['cmd'] == ['uv', 'run', 'mypy', '--strict', 'src']
+    assert calls[0]['cmd'] == [
+        'uv',
+        'run',
+        '--with',
+        'mypy',
+        'mypy',
+        '--strict',
+        'src',
+    ]
 
 
 def test_runs_from_the_repo_root_and_returns_the_exit_code(
@@ -99,6 +121,21 @@ def test_a_usage_exit_says_where_targets_are_meant_to_come_from(
 
     err = capsys.readouterr().err
     assert 'files = ' in err
+
+
+def test_the_usage_hint_does_not_claim_mypy_is_the_one_complaining(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    # `uv run --group typing mypy` against an undeclared group exits 2
+    # before mypy starts. The hook cannot tell that apart from mypy's own
+    # usage exit, so the hint has to name both -- it once asserted mypy had
+    # nothing to check and sent a person to edit the wrong config file.
+    _calls(monkeypatch, mypy_hook.USAGE_EXIT)
+
+    mypy_hook.main([])
+
+    assert 'runner' in capsys.readouterr().err
 
 
 def test_a_usage_exit_with_a_target_named_is_left_alone(

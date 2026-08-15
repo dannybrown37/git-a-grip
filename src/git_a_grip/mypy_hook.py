@@ -32,9 +32,18 @@ you prefer, and accept that the two can then disagree.
     - id: mypy
       args: ['--runner=uv run --group typing mypy']
 
+The default runner installs mypy itself, with `uv run --with mypy`, so that
+the first form above is the whole configuration: nothing to declare, nothing
+to keep in step. `--with` is the one way to have both halves at once --
+`uv run mypy` resolves the project's dependencies but requires the project
+to have declared a type checker it never imports, and `additional_dependencies`
+installs the tool but not the dependencies it has to resolve. A project that
+does declare mypy is unaffected; uv resolves the two requirements together
+and a pin in the project wins.
+
 Nothing here is mypy-specific beyond the name and the default runner: point
-`--runner=` at `uv run pyright` or `uv run ty check` and the same reasoning
-holds.
+`--runner=` at `uv run --with pyright pyright` or `uv run ty check` and the
+same reasoning holds.
 """
 
 from __future__ import annotations
@@ -44,9 +53,11 @@ import sys
 
 from git_a_grip.project_env import clean_env, repo_root, split_runner
 
-DEFAULT_RUNNER = 'uv run mypy'
+DEFAULT_RUNNER = 'uv run --with mypy mypy'
 # mypy's own exit code for "I was called wrongly", as against 1 for "I found
-# type errors". Only the former is worth explaining.
+# type errors". Only the former is worth explaining -- and `uv` exits 2 for
+# its own usage errors too, which is why the hint below refuses to claim
+# mypy is the one that complained.
 USAGE_EXIT = 2
 # The flags that name something to check without looking like a path.
 _TARGET_FLAGS = ('-m', '--module', '-p', '--package', '-c', '--command')
@@ -68,10 +79,18 @@ def names_a_target(args: list[str]) -> bool:
 
 
 def _no_target_hint() -> str:
+    # Deliberately conditional. The runner shares this exit code -- `uv run
+    # --group typing mypy` against an undeclared group exits 2 before mypy
+    # starts -- and a hint that asserts mypy ran sends you to edit the mypy
+    # config over an error in the pre-commit one.
     return (
-        'mypy: nothing was named to check. This hook passes no targets of '
-        'its own, so that it checks what `mypy` checks when you run it by '
-        'hand. Name them once, in your mypy config:\n'
+        'mypy: exited 2. Read the error above first: if it came from the '
+        'runner (an undeclared dependency group, an unknown flag) then fix '
+        'that -- the exit code is shared and this hook cannot tell which of '
+        'the two spoke.\n'
+        'If it was mypy, nothing was named to check. This hook passes no '
+        'targets of its own, so that it checks what `mypy` checks when you '
+        'run it by hand. Name them once, in your mypy config:\n'
         '  [tool.mypy]\n'
         '  files = ["src", "tests"]\n'
         'or, to keep them in the hook alone, args: [src, tests].\n'

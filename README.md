@@ -41,7 +41,7 @@ they shell out to `uv run` / your package manager.)
 | `commitizen-early` | Rejects a bad commit message in ~0.3s, instead of after the whole hook suite has run. Pair with the upstream `commitizen` hook for the cases it can't see (editor, merge, rebase). |
 | `ruff-check` | `ruff check --fix`, with fixes **re-staged** — no dirty tree to `git add` and amend. |
 | `ruff-format` | `ruff format`, likewise re-staged. |
-| `mypy` | Type-checks *the project*, in your project's env so mypy can import your dependencies instead of reporting on the imports. Names no files, so what it checks is what your mypy config says — not whichever files you happened to touch. `--runner=uv run ty check` swaps the engine. |
+| `mypy` | Type-checks *the project*, in your project's env so mypy can import your dependencies instead of reporting on the imports — and installs mypy itself via `uv run --with`, so there's no dependency group to declare or keep in step. Names no files, so what it checks is what your mypy config says — not whichever files you happened to touch. `--runner=uv run ty check` swaps the engine. |
 | `pytest` | Your test suite, from the repo root, in your project's env. `args: ['--runner=uv run --extra api pytest', ...]` to change the runner. |
 | `embed-tree` | Keeps a file tree in your README true. Drop `<!-- tree:start -->` / `<!-- tree:end -->` in, and it regenerates and re-stages on every commit. Contents come from `git ls-files`, so it's exactly what's committed. (Was `readme-tree`; the old id still works.) |
 | `embed-command` | Keeps a command's output — `mytool --help`, `make help` — true in your README. Name the command in `args`; nothing is discovered and run on its own. |
