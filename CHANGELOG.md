@@ -1,3 +1,9 @@
+## v0.12.1 (2026-08-29)
+
+### Fix
+
+- embed command taks a language arg so that markdown lint doens't complain about fenced-code-language
+
 ## v0.12.0 (2026-08-15)
 
 ### Feat
