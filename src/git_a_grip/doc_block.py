@@ -48,7 +48,12 @@ def _marker_line(lines: list[str], needle: str, start_at: int = 0) -> int:
     return -1
 
 
-def replace_block(text: str, marker: str, body: str) -> tuple[str, str]:
+def replace_block(
+    text: str,
+    marker: str,
+    body: str,
+    lang: str = '',
+) -> tuple[str, str]:
     """Put `body` between the markers, returning the text and any error."""
     start, end = markers(marker)
     lines = text.splitlines()
@@ -58,7 +63,8 @@ def replace_block(text: str, marker: str, body: str) -> tuple[str, str]:
     last = _marker_line(lines, end, first + 1)
     if last < 0:
         return text, f'no {end} marker found'
-    block = [start, '', '```', *body.splitlines(), '```', '', end]
+    fence = f'```{lang}' if lang else '```'
+    block = [start, '', fence, *body.splitlines(), '```', '', end]
     updated = '\n'.join([*lines[:first], *block, *lines[last + 1 :]])
     return (updated + '\n' if text.endswith('\n') else updated), ''
 
@@ -83,7 +89,14 @@ def repo_root() -> Path:
     return Path(top) if top else Path.cwd()
 
 
-def embed(tool: str, root: Path, target: Path, marker: str, body: str) -> int:
+def embed(  # noqa: PLR0917
+    tool: str,
+    root: Path,
+    target: Path,
+    marker: str,
+    body: str,
+    lang: str = '',
+) -> int:
     """Write `body` into `target`'s block, re-staging it if it changed.
 
     A rewrite still exits 0: the fix is staged by the time this returns, so
@@ -96,7 +109,7 @@ def embed(tool: str, root: Path, target: Path, marker: str, body: str) -> int:
         return 1
 
     original = target.read_text(encoding='utf-8')
-    updated, error = replace_block(original, marker, body)
+    updated, error = replace_block(original, marker, body, lang=lang)
     if error:
         start, end = markers(marker)
         sys.stderr.write(

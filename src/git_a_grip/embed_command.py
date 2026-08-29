@@ -9,7 +9,7 @@ the slot, and regenerate it on the commit that changed the command.
     <!-- help:end -->
 
     - id: embed-command
-      args: ['--marker=help', '--command=uv run gag --help']
+      args: ['--marker=help', '--command=uv run gag --help', '--lang=text']
       files: ^(src/.*\\.py|README\\.md)$
 
 The command is named in the config and nowhere else. Discovering executables
@@ -106,6 +106,7 @@ def main(argv: list[str]) -> int:
     target = root / doc_block.flag(argv, 'file', DEFAULT_FILE)
     marker = doc_block.flag(argv, 'marker', DEFAULT_MARKER)
     command = doc_block.flag(argv, 'command', '')
+    lang = doc_block.flag(argv, 'lang', '')
     expected_exit = int(doc_block.flag(argv, 'exit', str(DEFAULT_EXIT)))
 
     if not command:
@@ -122,4 +123,11 @@ def main(argv: list[str]) -> int:
         return 1
 
     body = _clean(output)
-    return doc_block.embed('embed-command', root, target, marker, body)
+    return doc_block.embed(
+        'embed-command',
+        root,
+        target,
+        marker,
+        body,
+        lang=lang,
+    )

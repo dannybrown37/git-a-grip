@@ -156,3 +156,20 @@ def test_unbalanced_quoting_is_an_error_not_a_crash(
     _sandbox(tmp_path, monkeypatch)
 
     assert embed_command.main(['--command=echo "unclosed']) == 1
+
+
+def test_lang_sets_the_code_fence_language(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    readme = _sandbox(tmp_path, monkeypatch)
+
+    code = embed_command.main(
+        [
+            f'--command={_prints("print(1)")}',
+            '--lang=text',
+        ],
+    )
+
+    assert code == 0
+    assert '```text\n1\n```' in readme.read_text()
