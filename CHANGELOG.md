@@ -1,3 +1,9 @@
+## v0.13.0 (2026-09-18)
+
+### Feat
+
+- add hook for biome (rust-based replacement for eslint + prettier, which are still retained for flexibility/legacy)
+
 ## v0.12.1 (2026-08-29)
 
 ### Fix
