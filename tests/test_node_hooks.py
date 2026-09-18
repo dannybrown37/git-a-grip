@@ -62,6 +62,68 @@ def test_explicit_runner_wins(tmp_path: Path) -> None:
     assert rest == ['a.ts']
 
 
+def test_biome_runs_check_write(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls = _record(monkeypatch, tmp_path)
+    source = tmp_path / 'a.ts'
+    source.write_text('const a = 1\n')
+
+    assert node_hooks.biome([str(source)]) == 0
+    assert calls[0][:5] == ['npx', '--no-install', 'biome', 'check', '--write']
+
+
+def test_biome_restages_what_it_rewrote(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    source = tmp_path / 'a.ts'
+    source.write_text('const a = 1\n')
+    staged: list[list[str]] = []
+
+    def fake_run(_command: list[str], _root: Path, _tool: str) -> int:
+        source.write_text('const a = 1;\n')
+        return 0
+
+    monkeypatch.setattr(node_hooks, 'repo_root', lambda: tmp_path)
+    monkeypatch.setattr(node_hooks, 'run', fake_run)
+    monkeypatch.setattr(
+        node_hooks.restage,
+        'add',
+        lambda paths: staged.append(paths) or 0,
+    )
+
+    assert node_hooks.biome([str(source)]) == 0
+    assert staged == [[str(source)]]
+
+
+def test_biome_does_nothing_without_files(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls = _record(monkeypatch, tmp_path)
+
+    assert node_hooks.biome([]) == 0
+    assert calls == []
+
+
+def test_biome_respects_dir_flag(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    workdirs: list[Path] = []
+    calls = _record(monkeypatch, tmp_path, workdirs)
+    (tmp_path / 'web').mkdir()
+    (tmp_path / 'web' / 'a.ts').write_text('const a = 1\n')
+    monkeypatch.chdir(tmp_path)
+
+    assert node_hooks.biome(['--dir=web', 'web/a.ts']) == 0
+    assert workdirs == [tmp_path / 'web']
+    assert 'a.ts' in calls[0]
+    assert 'web/a.ts' not in calls[0]
+
+
 def test_eslint_fixes_and_fails_on_warnings_by_default(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

@@ -25,6 +25,7 @@ repos:
         args: ['--marker=help', '--command=mytool --help']
       - id: regen-file
         args: ['--command=python scripts/build_docs.py', '--file=docs/api.md']
+      - id: biome
       - id: pytest
         args: [tests/, -q]
       - id: vitest
@@ -33,9 +34,9 @@ repos:
 ```
 
 Nothing to install. Your project needs no `ruff`, `cz` or `uv` on PATH —
-pre-commit builds the env. (`pytest`, `mypy`, `eslint`, `tsc` and `vitest`
-are the exceptions: they must run inside *your* project's environment, so
-they shell out to `uv run` / your package manager.)
+pre-commit builds the env. (`pytest`, `mypy`, `biome`, `eslint`, `tsc` and
+`vitest` are the exceptions: they must run inside *your* project's
+environment, so they shell out to `uv run` / your package manager.)
 
 | Hook | What it does for you |
 | --- | --- |
@@ -47,6 +48,7 @@ they shell out to `uv run` / your package manager.)
 | `embed-tree` | Keeps a file tree in your README true. Drop `<!-- tree:start -->` / `<!-- tree:end -->` in, and it regenerates and re-stages on every commit. Contents come from `git ls-files`, so it's exactly what's committed. (Was `readme-tree`; the old id still works.) |
 | `embed-command` | Keeps a command's output — `mytool --help`, `make help` — true in your README. Name the command in `args`; nothing is discovered and run on its own. |
 | `regen-file` | Replaces `bash -c 'run-the-script && git add the-file'`. Runs the generator you name and re-stages the files you name — only the ones whose contents actually moved, and it fails the commit if the script quietly stopped writing one. Use `embed-command` instead when the script owns only a marked block. |
+| `biome` | `biome check --write` — lint + format in one Rust binary, ~100x faster than eslint. Fixes are re-staged. `--dir=web` for a monorepo. Default `types_or` covers JS, TS, JSON, CSS; add `files:` for Svelte/Astro/Vue. |
 | `eslint` | `eslint --fix`, re-staged, `--max-warnings=0` by default so warnings can't pile up forever. `--dir=web` for a monorepo. |
 | `tsc` | Type-checks *the project*, never bare filenames — given filenames, tsc silently ignores your `tsconfig.json`. `--dir=web` for a monorepo. |
 | `block-private-terms` | Blocks a commit that *adds* a line containing one of your own private terms — an employer, a client, an internal hostname. A secret scanner can't find these; they're ordinary words, sensitive only because of who typed them. The terms live outside the tree (see [`gag privacy`](#gag-privacy--the-terms-the-block-private-terms-hook-blocks-on)), so nothing sensitive is committed to configure it. Unconfigured, it warns and passes. |
@@ -56,13 +58,14 @@ they shell out to `uv run` / your package manager.)
 Anything in `args` is passed through to the underlying tool. Pin your own
 tool version with `additional_dependencies: [ruff==0.16.1]`.
 
-`eslint`, `tsc` and `vitest` run from the repo root unless you pass `--dir=`.
-If your JS lives in a subdirectory, its `eslint.config.mjs`, `tsconfig.json`
-and `node_modules` resolve from *there*, so name it — and scope the hooks to
-match, since files outside that subdirectory are skipped anyway:
+`biome`, `eslint`, `tsc` and `vitest` run from the repo root unless you pass
+`--dir=`. If your JS lives in a subdirectory, its `biome.json`,
+`eslint.config.mjs`, `tsconfig.json` and `node_modules` resolve from *there*,
+so name it — and scope the hooks to match, since files outside that
+subdirectory are skipped anyway:
 
 ```yaml
-      - id: eslint
+      - id: biome
         args: [--dir=web]
         files: ^web/
       - id: tsc
@@ -73,8 +76,9 @@ match, since files outside that subdirectory are skipped anyway:
         files: ^web/
 ```
 
-`--runner=` means different things either side of that list. For `eslint` and
-`tsc` it names only the package manager the tool is run *through*; for
+`--runner=` means different things either side of that list. For `biome`,
+`eslint` and `tsc` it names only the package manager the tool is run *through*;
+for
 `vitest`, `pytest` and `mypy` it replaces the command outright, because `npm
 test` chooses its own test tool and appending `vitest run` to it would be
 wrong — write `--runner=npm test -- --run` in full.
@@ -223,6 +227,7 @@ repos:
       - id: <one of the below>
       - id: <...any number of others>
 
+  biome                Lint and format with project's own Biome, re-staging fixes.
   block-private-terms  Block a commit adding one of your own private terms.
   commitizen-early     Reject a bad commit message before the slow hooks run.
   embed-command        Keep a command's output (`--help`) true in the README.

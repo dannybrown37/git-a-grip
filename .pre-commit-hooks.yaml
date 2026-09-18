@@ -88,6 +88,16 @@
   # Calls `git add`; running two copies in parallel races index.lock.
   require_serial: true
 
+- id: biome
+  name: Biome
+  description: >-
+    Lint and format with the project's own Biome (`check --write`),
+    re-staging the files it rewrote.
+  entry: python -m git_a_grip.hooks biome
+  language: python
+  types_or: [javascript, jsx, ts, tsx, json, css]
+  require_serial: true
+
 - id: eslint
   name: ESLint
   description: >-

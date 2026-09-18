@@ -206,6 +206,26 @@ DOCS: dict[str, HookDoc] = {
             'between two markers.'
         ),
     ),
+    'biome': HookDoc(
+        name='Biome',
+        summary="Lint and format with project's own Biome, re-staging fixes.",
+        description=(
+            "Lint and format with the project's own Biome (`check --write`), "
+            're-staging the files it rewrote.'
+        ),
+        config=['- id: biome', '  args: [--dir=web]  # optional'],
+        notes=(
+            'A single Rust binary that replaces eslint + prettier in one '
+            'pass -- ~100x faster. `check --write` fixes what it can and '
+            "exits non-zero for what it cannot. Runs through the project's "
+            'package manager, detected from the nearest lockfile (pnpm, bun, '
+            'yarn, else npx) and overridable with `--runner=...`. `--dir=web` '
+            'runs it from a subdirectory, for a monorepo whose `biome.json` '
+            'and `node_modules` live there; files outside that subdirectory '
+            'are skipped. The default `types_or` covers JS, TS, JSON and CSS; '
+            'add `files:` patterns for Svelte, Astro or Vue.'
+        ),
+    ),
     'eslint': HookDoc(
         name='ESLint',
         summary="Lint with the project's own eslint, re-staging fixes.",

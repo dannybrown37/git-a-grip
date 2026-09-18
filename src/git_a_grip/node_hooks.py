@@ -1,18 +1,24 @@
-"""ESLint, tsc and vitest hooks that avoid the traps every repo hits.
+"""Node-ecosystem hooks: biome, eslint, tsc, vitest.
 
-Both hooks run through the project's own package manager, not through a copy
+All four run through the project's own package manager, not through a copy
 of the tool that pre-commit installed -- a JS project's lint rules live in its
 `node_modules`, and a second, isolated eslint would resolve none of its
 plugins. The runner is detected from the lockfile (`pnpm`, `yarn`, `bun`, else
 `npx`) and overridable with `--runner=...`.
 
 They run from the repo root unless `--dir=` names a subdirectory. A monorepo
-that keeps its JS under `web/` resolves `eslint.config.mjs`, `tsconfig.json`
-and `node_modules` from *there*, so running from the root finds none of them
--- which left such a repo writing the `bash -c 'cd web && ...'` wrapper these
-hooks exist to replace.
+that keeps its JS under `web/` resolves `biome.json`, `eslint.config.mjs`,
+`tsconfig.json` and `node_modules` from *there*, so running from the root
+finds none of them -- which left such a repo writing the
+`bash -c 'cd web && ...'` wrapper these hooks exist to replace.
 
 The traps:
+
+**biome** is the fast path -- a single Rust binary that lints and formats in
+one pass (~100x faster than eslint). `biome check --write` is the default
+here: it fixes what it can and exits non-zero for what it can't. No plugin
+ecosystem to resolve, so the package-manager dispatch is just for finding
+the binary in `node_modules/.bin`.
 
 **eslint** exits 0 on warnings. A rule set with warnings in it therefore
 passes the hook forever, and the warnings accumulate until nobody reads
@@ -185,6 +191,34 @@ def run(
             f'Install it, or set args: ["--runner=<command>", ...].\n',
         )
         return 1
+
+
+def biome(argv: list[str]) -> int:
+    """Lint and format with the project's biome, re-staging what it rewrote."""
+    root = repo_root()
+    workdir, argv = take_dir(argv, root)
+    runner, args = split_args(argv, workdir, root)
+    paths = restage.target_paths(args)
+    if workdir != root:
+        args, paths = relocate(args, paths, workdir)
+    if not paths:
+        return 0
+    before = restage.digests(paths)
+    code = run(
+        [*runner, 'biome', 'check', '--write', *args],
+        workdir,
+        'biome',
+    )
+    fixed = restage.changed(before, restage.digests(paths))
+    if fixed:
+        sys.stderr.write(
+            f'biome: rewrote and re-staged {len(fixed)} file(s):\n'
+            + ''.join(f'  {p}\n' for p in fixed),
+        )
+        if restage.add(fixed) != 0:
+            sys.stderr.write('biome: failed to re-stage the fixed files.\n')
+            return 1
+    return code
 
 
 def eslint(argv: list[str]) -> int:

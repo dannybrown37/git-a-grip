@@ -31,6 +31,7 @@ HOOKS: dict[str, Hook] = {
     'ruff-check': lambda argv: ruff_hooks.run('check', ['--fix', *argv]),
     'ruff-format': lambda argv: ruff_hooks.run('format', argv),
     'mypy': mypy_hook.main,
+    'biome': node_hooks.biome,
     'eslint': node_hooks.eslint,
     'tsc': node_hooks.tsc,
     'vitest': node_hooks.vitest,
