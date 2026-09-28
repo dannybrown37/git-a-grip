@@ -524,3 +524,105 @@ def test_main_never_asks_github_about_a_skipped_repo(
     assert remote.main(['--all-repos', str(tmp_path)]) == 0
     assert inspected == ['kept']
     assert '1 repos skipped by' in capsys.readouterr().out
+
+
+def _hooked_repo(tmp_path: Path, config: str, *installed: str) -> Path:
+    repo = tmp_path / 'repo'
+    run: Callable[..., Any] = subprocess.run
+    run(['git', 'init', '-q', str(repo)], check=True)
+    if config:
+        (repo / '.pre-commit-config.yaml').write_text(config)
+    for stage in installed:
+        (repo / '.git' / 'hooks' / stage).write_text('#!/bin/sh\n')
+    return repo
+
+
+ORIGIN = 'git@github.com:me/proj.git'
+_OURS = """\
+repos:
+  - repo: https://github.com/dannybrown37/git-a-grip
+    rev: v0.15.0
+    hooks:
+      - id: protect-branch
+"""
+_UPSTREAM = """\
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: no-commit-to-branch
+"""
+_UNRELATED = """\
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: check-yaml
+"""
+
+
+@pytest.mark.parametrize(
+    ('config', 'installed', 'expected'),
+    [
+        (_OURS, ('pre-push',), 'pre-commit'),
+        (_UPSTREAM, ('pre-commit',), 'pre-commit'),
+        # Each guard runs at its own stage; the other stage's git hook
+        # being installed does not make it run.
+        (_OURS, ('pre-commit',), 'uninstalled'),
+        (_UPSTREAM, ('pre-push',), 'uninstalled'),
+        (_OURS, (), 'uninstalled'),
+        (_UNRELATED, ('pre-commit', 'pre-push'), ''),
+        ('', ('pre-commit', 'pre-push'), ''),
+        ('not: [valid', ('pre-commit', 'pre-push'), ''),
+    ],
+)
+def test_local_guard(
+    tmp_path: Path,
+    config: str,
+    installed: tuple[str, ...],
+    expected: str,
+) -> None:
+    repo = _hooked_repo(tmp_path, config, *installed)
+
+    assert remote.local_guard(repo) == expected
+
+
+@pytest.mark.parametrize(
+    ('protection', 'guard', 'shown'),
+    [
+        ('unknown', 'pre-commit', ' pre-commit '),
+        ('unknown', 'uninstalled', ' uninstalled '),
+        ('none', 'pre-commit', ' none '),
+        ('classic', 'pre-commit', ' classic '),
+    ],
+)
+def test_local_guard_fills_in_only_where_github_is_silent(
+    protection: str,
+    guard: str,
+    shown: str,
+) -> None:
+    row = _quiet_row(protection=protection)
+    row.local_guard = guard
+    line = _row_line(remote.render([row], NOW), 'quiet')
+
+    assert shown in line
+
+
+def test_local_guard_is_amber_not_green() -> None:
+    row = _quiet_row()
+    row.local_guard = 'pre-commit'
+
+    assert remote.YELLOW in remote.render([row], NOW, colour=True)
+
+
+def test_inspect_records_the_local_guard(tmp_path: Path) -> None:
+    repo = _hooked_repo(tmp_path, _OURS, 'pre-push')
+    run: Callable[..., Any] = subprocess.run
+    run(
+        ['git', '-C', str(repo), 'remote', 'add', 'origin', ORIGIN],
+        check=True,
+    )
+
+    row = remote.inspect(repo, _fake_gh(_responses()))
+
+    assert row.local_guard == 'pre-commit'

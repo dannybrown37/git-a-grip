@@ -9,6 +9,23 @@
   always_run: true
   pass_filenames: false
 
+- id: protect-branch
+  name: Protect the default branch
+  description: >-
+    Refuse a push straight onto the default branch -- the one `origin/HEAD`
+    names, else `main` and `master` -- for repos where GitHub branch
+    protection is unavailable.
+  entry: python -m git_a_grip.hooks protect-branch
+  language: python
+  # At the push, where GitHub's protection would have been: a commit on a
+  # local main harms nothing until it leaves. Needs the pre-push git hook
+  # installed, or it never runs -- see the README.
+  stages: [pre-push]
+  # The branch is the unit, not the files: a push to main is refused
+  # whatever it touches.
+  always_run: true
+  pass_filenames: false
+
 - id: ruff-check
   name: Ruff check
   description: >-

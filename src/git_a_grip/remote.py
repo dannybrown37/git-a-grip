@@ -22,6 +22,14 @@ kept for reference. Naming them in `$XDG_CONFIG_HOME/git-a-grip/remote-skip`
 drops them before any `gh` call, so they cost nothing rather than five API
 round-trips each. The file is per person, not per repo, for the same reason
 the repo list is local: which projects matter is the reader's call.
+
+Where GitHub declines to say what guards a branch -- a private repo on a
+free plan -- the next best answer is on disk: a pre-commit config that
+refuses pushes to it (`protect-branch`) or commits (upstream
+`no-commit-to-branch`). That shows as `pre-commit`, or `uninstalled` when
+the config asks for it but the git hook for its stage was never installed.
+Amber, never green: `--no-verify` walks past it, and a push from any other
+machine never meets it.
 """
 
 from __future__ import annotations
@@ -69,6 +77,12 @@ _HTTP_STATUS = re.compile(r'\(HTTP (\d{3})\)')
 _RUNS_PER_PAGE = 30
 _WORKERS = 8
 RECENT_DAYS = 90
+# Hook id -> the git hook it runs from; installed at the other stage, it
+# never runs at all.
+_BRANCH_GUARDS = {
+    'protect-branch': 'pre-push',
+    'no-commit-to-branch': 'pre-commit',
+}
 _SECURITY = {
     'secret_scanning': 'secret-scanning',
     'secret_scanning_push_protection': 'push-protection',
@@ -101,6 +115,7 @@ class RepoRemote:
     slug: str
     note: str = ''
     status: RemoteStatus | None = None
+    local_guard: str = ''
 
 
 def parse_github_slug(url: str) -> tuple[str, str] | None:
@@ -248,6 +263,31 @@ def _origin_url(path: Path) -> str:
     ).stdout.strip()
 
 
+def local_guard(path: Path) -> str:
+    """Whether a pre-commit hook guards the default branch, and is live."""
+    stages = {
+        _BRANCH_GUARDS[use.hook_id]
+        for use in audit.audit_repo(path).uses
+        if use.hook_id in _BRANCH_GUARDS
+    }
+    if not stages:
+        return ''
+    live = any(_git_hook_installed(path, stage) for stage in stages)
+    return 'pre-commit' if live else 'uninstalled'
+
+
+def _git_hook_installed(path: Path, stage: str) -> bool:
+    # --git-path, because hooks live elsewhere in a worktree or under
+    # core.hooksPath, and a config that is never installed guards nothing.
+    hook = subprocess.run(  # noqa: S603 -- fixed argv, no shell
+        ['git', '-C', str(path), 'rev-parse', '--git-path', f'hooks/{stage}'],  # noqa: S607
+        capture_output=True,
+        text=True,
+        check=False,
+    ).stdout.strip()
+    return bool(hook) and (path / hook).is_file()
+
+
 def inspect(path: Path, gh: Gh = gh_api) -> RepoRemote:
     """Resolve one local repo to its GitHub status."""
     url = _origin_url(path)
@@ -260,6 +300,7 @@ def inspect(path: Path, gh: Gh = gh_api) -> RepoRemote:
         name=path.name,
         slug=f'{owner}/{repo}',
         status=fetch_status(owner, repo, gh),
+        local_guard=local_guard(path),
     )
 
 
@@ -275,6 +316,8 @@ _COLOURS = {
     'classic': GREEN,
     'ruleset': GREEN,
     'classic+ruleset': GREEN,
+    'pre-commit': YELLOW,
+    'uninstalled': YELLOW,
     'success': GREEN,
     'failure': RED,
     'timed_out': RED,
@@ -318,7 +361,9 @@ def _row(item: RepoRemote, now: datetime, *, colour: bool) -> str:
     if status.error:
         return f'  {item.name:<24} {item.slug}: {status.error}'
     protection = (
-        '' if status.protection in _BLANK_PROTECTION else status.protection
+        item.local_guard
+        if status.protection in _BLANK_PROTECTION
+        else status.protection
     )
     ci = '' if status.ci in _BLANK_CI else status.ci
     flags = ' archived' if status.archived else ''
