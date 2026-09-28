@@ -1,3 +1,9 @@
+## v0.15.0 (2026-09-28)
+
+### Feat
+
+- shellcheck and shellformat (#2)
+
 ## v0.14.1 (2026-09-28)
 
 ### Fix
