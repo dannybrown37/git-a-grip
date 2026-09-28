@@ -286,7 +286,9 @@ DOCS: dict[str, HookDoc] = {
         notes=(
             'The one hook that needs something outside the env pre-commit '
             'builds -- your tests import your project, so they need your '
-            "project's environment."
+            "project's environment. Runs at pre-push, not pre-commit: add "
+            '`pre-push` to `default_install_hook_types`, or it never runs. '
+            '`stages: [pre-commit]` to run it on every commit instead.'
         ),
     ),
     'zizmor': HookDoc(

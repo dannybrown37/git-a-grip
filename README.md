@@ -12,6 +12,8 @@ Two things, from one package:
 ## 1. The hooks
 
 ```yaml
+default_install_hook_types: [pre-commit, pre-push]  # pytest runs at pre-push
+
 repos:
   - repo: https://github.com/dannybrown37/git-a-grip
     rev: v0.13.0
@@ -44,7 +46,7 @@ environment, so they shell out to `uv run` / your package manager.)
 | `ruff-check` | `ruff check --fix`, with fixes **re-staged** — no dirty tree to `git add` and amend. |
 | `ruff-format` | `ruff format`, likewise re-staged. |
 | `mypy` | Type-checks *the project*, in your project's env so mypy can import your dependencies instead of reporting on the imports — and installs mypy itself via `uv run --with`, so there's no dependency group to declare or keep in step. Names no files, so what it checks is what your mypy config says — not whichever files you happened to touch. `--runner=uv run ty check` swaps the engine. |
-| `pytest` | Your test suite, from the repo root, in your project's env. `args: ['--runner=uv run --extra api pytest', ...]` to change the runner. |
+| `pytest` | Your test suite, from the repo root, in your project's env. Runs on **push**, not commit — needs `pre-push` in `default_install_hook_types` (or `pre-commit install -t pre-push`), else it silently never runs. `args: ['--runner=uv run --extra api pytest', ...]` to change the runner. |
 | `embed-tree` | Keeps a file tree in your README true. Drop `<!-- tree:start -->` / `<!-- tree:end -->` in, and it regenerates and re-stages on every commit. Contents come from `git ls-files`, so it's exactly what's committed. (Was `readme-tree`; the old id still works.) |
 | `embed-command` | Keeps a command's output — `mytool --help`, `make help` — true in your README. Name the command in `args`; nothing is discovered and run on its own. |
 | `regen-file` | Replaces `bash -c 'run-the-script && git add the-file'`. Runs the generator you name and re-stages the files you name — only the ones whose contents actually moved, and it fails the commit if the script quietly stopped writing one. Use `embed-command` instead when the script owns only a marked block. |
@@ -150,6 +152,31 @@ sync: installed v0.7.0, but v0.8.0 is the newest tag at <repo>.
 The plan is still printed — the warning says the target may not be the one
 you want, not that the answer is useless. An unreachable remote skips the
 check silently, so `gag sync` still works offline.
+
+### `gag remote` — what does GitHub say about every repo?
+
+The same repos `gag audit` finds, seen from GitHub: one line each with the
+default branch, whether it is protected (`classic`, `ruleset`, or `none`),
+the CI outcome, when CI last ran and when anything was last pushed, open PRs
+and issues, and which security features are on.
+
+Only repos with a commit in the last 90 days are checked; `--all-repos`
+includes the rest. Blank means nothing to report — zero, no CI, or GitHub
+declining to say (protection on a private repo on a free plan). Unprotected
+is spelled out as `none`, in red on a terminal, with failing CI; `NO_COLOR`
+turns colour off.
+
+```bash
+gag remote
+gag remote --all-repos ~/projects ~/work
+gag remote --json | jq '.repos[] | select(.status.protection == "none")'
+```
+
+CI is the worst of each workflow's *newest* run on the default branch, so a
+fixed failure doesn't linger and a green release job can't mask a red test
+job. Everything goes through `gh api` — install `gh` and `gh auth login`
+first; there is no token handling in `gag`. Clones without a GitHub remote
+are listed as such.
 
 ### `gag privacy` — the terms the `block-private-terms` hook blocks on
 
@@ -303,6 +330,7 @@ git-a-grip/
 |       |-- project_env.py
 |       |-- pytest_hook.py
 |       |-- regen_file.py
+|       |-- remote.py
 |       |-- restage.py
 |       |-- ruff_hooks.py
 |       |-- sync.py
@@ -327,6 +355,7 @@ git-a-grip/
 |   |-- test_project_env.py
 |   |-- test_pytest_hook.py
 |   |-- test_regen_file.py
+|   |-- test_remote.py
 |   |-- test_restage.py
 |   |-- test_ruff_hooks.py
 |   |-- test_sync.py

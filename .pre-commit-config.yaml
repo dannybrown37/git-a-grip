@@ -1,4 +1,4 @@
-default_install_hook_types: [pre-commit, commit-msg]
+default_install_hook_types: [pre-commit, commit-msg, pre-push]
 default_stages: [pre-commit]
 
 repos:
@@ -98,5 +98,6 @@ repos:
         name: Tests
         entry: uv run python -m git_a_grip.hooks pytest tests/ -q
         language: system
+        stages: [pre-push]
         files: ^(src/|tests/).*
         pass_filenames: false

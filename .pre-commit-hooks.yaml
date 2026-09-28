@@ -138,6 +138,10 @@
     override with `--runner=...`).
   entry: python -m git_a_grip.hooks pytest
   language: python
+  # A suite is too slow to pay on every commit; a push is the last point it
+  # can still stop broken code leaving the machine. Needs the pre-push git
+  # hook installed, or it never runs -- see the README.
+  stages: [pre-push]
   files: ^(src/|tests/).*
   pass_filenames: false
 

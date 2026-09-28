@@ -64,6 +64,8 @@ jobs:
           uv run --isolated --no-project --with dist/*.whl \
             gag sync --help
           uv run --isolated --no-project --with dist/*.whl \
+            gag remote --help
+          uv run --isolated --no-project --with dist/*.whl \
             gag hooks --help
           uv run --isolated --no-project --with dist/*.whl \
             gag privacy --help
