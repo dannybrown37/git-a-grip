@@ -12,13 +12,14 @@ Two things, from one package:
 ## 1. The hooks
 
 ```yaml
-default_install_hook_types: [pre-commit, pre-push]  # pytest, vitest run at pre-push
+default_install_hook_types: [pre-commit, pre-push]  # protect-branch, pytest, vitest run at pre-push
 
 repos:
   - repo: https://github.com/dannybrown37/git-a-grip
     rev: v0.15.1
     hooks:
       - id: commitizen-early
+      - id: protect-branch
       - id: ruff-check
       - id: ruff-format
       - id: mypy
@@ -45,6 +46,7 @@ environment, so they shell out to `uv run` / your package manager.)
 | Hook | What it does for you |
 | --- | --- |
 | `commitizen-early` | Rejects a bad commit message in ~0.3s, instead of after the whole hook suite has run. Pair with the upstream `commitizen` hook for the cases it can't see (editor, merge, rebase). |
+| `protect-branch` | Refuses a push straight onto the default branch — whatever `origin/HEAD` names, else `main`/`master`; `--branch=NAME` to choose. The branch protection a private repo on GitHub's free plan can't have, moved to your machine: it stops accidents, not `--no-verify`. Checks the branch pushed *to*, so `git push origin feature:main` is caught and a local commit on `main` isn't. Runs on **push**, like `pytest` — same `pre-push` install requirement. `gag remote` shows it as `pre-commit` where GitHub won't say what guards the branch. |
 | `ruff-check` | `ruff check --fix`, with fixes **re-staged** — no dirty tree to `git add` and amend. |
 | `ruff-format` | `ruff format`, likewise re-staged. |
 | `mypy` | Type-checks *the project*, in your project's env so mypy can import your dependencies instead of reporting on the imports — and installs mypy itself via `uv run --with`, so there's no dependency group to declare or keep in step. Names no files, so what it checks is what your mypy config says — not whichever files you happened to touch. `--runner=uv run ty check` swaps the engine. |
@@ -170,6 +172,12 @@ declining to say (protection on a private repo on a free plan). Unprotected
 is spelled out as `none`, in red on a terminal, with failing CI; `NO_COLOR`
 turns colour off.
 
+Where GitHub won't say, the repo's own config answers instead: a
+[`protect-branch`](#1-the-hooks) (or upstream `no-commit-to-branch`) hook
+shows as `pre-commit`, or `uninstalled` if the git hook for its stage was
+never installed.
+Amber, not green — `--no-verify` and other machines walk past it.
+
 Repos that will never need attention — a vendored fork, an archive — can be
 named in `~/.config/git-a-grip/remote-skip` (honours `XDG_CONFIG_HOME`), one
 directory name per line, `#` for comments. They are dropped before any `gh`
@@ -271,6 +279,7 @@ repos:
   embed-tree           Regenerate the README file tree, and re-stage it.
   eslint               Lint with the project's own eslint, re-staging fixes.
   mypy                 Type-check the project in its own environment.
+  protect-branch       Refuse a push straight onto the default branch.
   pytest               Run the repo's tests through its own environment.
   regen-file           Run a generator script, and re-stage what it rewrote.
   ruff-check           Lint with `ruff check --fix`, re-staging what it fixed.
@@ -340,6 +349,7 @@ git-a-grip/
 |       |-- privacy_hook.py
 |       |-- privacy_terms.py
 |       |-- project_env.py
+|       |-- protect_branch.py
 |       |-- pytest_hook.py
 |       |-- regen_file.py
 |       |-- remote.py
@@ -367,6 +377,7 @@ git-a-grip/
 |   |-- test_privacy_hook.py
 |   |-- test_privacy_terms.py
 |   |-- test_project_env.py
+|   |-- test_protect_branch.py
 |   |-- test_pytest_hook.py
 |   |-- test_regen_file.py
 |   |-- test_remote.py

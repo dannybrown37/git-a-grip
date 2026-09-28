@@ -66,6 +66,32 @@ DOCS: dict[str, HookDoc] = {
             'message (interactive editor, merge, rebase).'
         ),
     ),
+    'protect-branch': HookDoc(
+        name='Protect the default branch',
+        summary='Refuse a push straight onto the default branch.',
+        description=(
+            'Refuse a push straight onto the default branch -- the one '
+            '`origin/HEAD` names, else `main` and `master` -- for repos '
+            'where GitHub branch protection is unavailable.'
+        ),
+        config=[
+            '- id: protect-branch',
+            '  args: [--branch=trunk]  # optional',
+        ],
+        notes=(
+            'For a private repo on a free plan, where GitHub has no branch '
+            'protection to offer. Runs at pre-push, not pre-commit: add '
+            '`pre-push` to `default_install_hook_types`, or it never runs. '
+            'Checks the branch being pushed to, so `git push origin '
+            'feature:main` is caught and committing on a local main is not. '
+            '`--branch=NAME`, once per branch, replaces the default '
+            'outright. '
+            '`--no-verify` or `SKIP=protect-branch` walks past it, so it is '
+            'a guard against accidents, not against intent. `gag remote` '
+            'reports a repo using it (or upstream `no-commit-to-branch`) as '
+            '`pre-commit` when GitHub will not say what guards the branch.'
+        ),
+    ),
     'ruff-check': HookDoc(
         name='Ruff check',
         summary='Lint with `ruff check --fix`, re-staging what it fixed.',

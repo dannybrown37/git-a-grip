@@ -18,13 +18,14 @@ from collections.abc import Callable
 
 from git_a_grip import commitizen_early, embed_command, embed_tree
 from git_a_grip import mypy_hook, node_hooks, privacy_hook, pytest_hook
-from git_a_grip import regen_file
+from git_a_grip import protect_branch, regen_file
 from git_a_grip import ruff_hooks, shellcheck_hook, shfmt_hook, zizmor_hook
 
 Hook = Callable[[list[str]], int]
 
 HOOKS: dict[str, Hook] = {
     'commitizen-early': lambda _argv: commitizen_early.main(),
+    'protect-branch': protect_branch.main,
     'embed-tree': embed_tree.main,
     'embed-command': embed_command.main,
     'regen-file': regen_file.main,
