@@ -464,3 +464,63 @@ def test_progress_is_silent_off_a_tty() -> None:
         progress.tick()
 
     assert stream.getvalue() == ''
+
+
+@pytest.mark.parametrize(
+    ('text', 'expected'),
+    [
+        ('old-thing\ndotfiles\n', {'old-thing', 'dotfiles'}),
+        ('# retired\n\n  spaced  \n', {'spaced'}),
+        ('', set()),
+    ],
+)
+def test_read_skips(tmp_path: Path, text: str, expected: set[str]) -> None:
+    path = tmp_path / 'remote-skip'
+    path.write_text(text)
+
+    assert remote.read_skips(path) == expected
+
+
+def test_a_missing_skip_file_skips_nothing(tmp_path: Path) -> None:
+    assert remote.read_skips(tmp_path / 'absent') == set()
+
+
+def test_skip_path_follows_xdg(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv('XDG_CONFIG_HOME', str(tmp_path))
+
+    assert remote.skip_path() == tmp_path / 'git-a-grip' / 'remote-skip'
+
+
+def test_skipped_repos_are_counted_in_the_report() -> None:
+    report = remote.render([_quiet_row()], NOW, skipped=2)
+
+    assert '2 repos skipped by' in report
+    assert 'remote-skip' in report
+
+
+def test_main_never_asks_github_about_a_skipped_repo(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    config = tmp_path / 'config'
+    (config / 'git-a-grip').mkdir(parents=True)
+    (config / 'git-a-grip' / 'remote-skip').write_text('ignored\n')
+    monkeypatch.setenv('XDG_CONFIG_HOME', str(config))
+    monkeypatch.setattr(remote.shutil, 'which', lambda _: '/usr/bin/gh')
+    repos = [tmp_path / 'kept', tmp_path / 'ignored']
+    monkeypatch.setattr(remote.audit, 'find_repos', lambda _: repos)
+    inspected: list[str] = []
+
+    def fake_inspect(path: Path) -> remote.RepoRemote:
+        inspected.append(path.name)
+        return remote.RepoRemote(name=path.name, slug='', note='n/a')
+
+    monkeypatch.setattr(remote, 'inspect', fake_inspect)
+
+    assert remote.main(['--all-repos', str(tmp_path)]) == 0
+    assert inspected == ['kept']
+    assert '1 repos skipped by' in capsys.readouterr().out

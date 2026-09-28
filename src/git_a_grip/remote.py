@@ -16,6 +16,12 @@ new dependency -- whatever `gh auth login` can see is what gets reported.
 The repo list comes from the local tree, not from the GitHub account: the
 question is about the projects you actually work on, and a clone with no
 GitHub remote is itself worth a line.
+
+Some local repos will never need attention -- a vendored fork, an archive
+kept for reference. Naming them in `$XDG_CONFIG_HOME/git-a-grip/remote-skip`
+drops them before any `gh` call, so they cost nothing rather than five API
+round-trips each. The file is per person, not per repo, for the same reason
+the repo list is local: which projects matter is the reader's call.
 """
 
 from __future__ import annotations
@@ -43,6 +49,9 @@ gag remote -- GitHub status of every local repo, at a glance.
   gag remote --all-repos include repos with no commit in 90 days
   gag remote --json      emit JSON instead of a table
   gag remote --help      show this
+
+Repos named in ~/.config/git-a-grip/remote-skip (one directory name per
+line, # for comments) are never checked.
 
 Needs `gh` on PATH and logged in (`gh auth login`).
 """
@@ -100,6 +109,23 @@ def parse_github_slug(url: str) -> tuple[str, str] | None:
     if not match or match['repo'] in {'.', '..'}:
         return None
     return match['owner'], match['repo']
+
+
+def skip_path() -> Path:
+    """The per-person list of repo names `gag remote` never checks."""
+    config = os.environ.get('XDG_CONFIG_HOME')
+    root = Path(config) if config else Path.home() / '.config'
+    return root / 'git-a-grip' / 'remote-skip'
+
+
+def read_skips(path: Path) -> set[str]:
+    """Return the repo names in a skip file; a missing file skips none."""
+    try:
+        text = path.read_text()
+    except FileNotFoundError:
+        return set()
+    lines = (line.strip() for line in text.splitlines())
+    return {line for line in lines if line and not line.startswith('#')}
 
 
 def gh_api(path: str) -> tuple[int, Any]:
@@ -312,6 +338,7 @@ def render(
     *,
     colour: bool = False,
     hidden: int = 0,
+    skipped: int = 0,
 ) -> str:
     """Render the sweep as a table with a one-line tally on top."""
     statuses = [r.status for r in rows if r.status and not r.status.error]
@@ -331,7 +358,7 @@ def render(
         ]
         if hidden
         else []
-    )
+    ) + (['', f'{skipped} repos skipped by {skip_path()}.'] if skipped else [])
     return '\n'.join(
         [
             (
@@ -438,8 +465,10 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     now = datetime.now(UTC)
+    skips = read_skips(skip_path())
     found = audit.find_repos(paths or audit.default_roots())
-    repos = found if '--all-repos' in args else select_recent(found, now)
+    wanted = [repo for repo in found if repo.name not in skips]
+    repos = wanted if '--all-repos' in args else select_recent(wanted, now)
 
     def inspect_and_tick(path: Path) -> RepoRemote:
         row = inspect(path)
@@ -458,7 +487,8 @@ def main(argv: list[str] | None = None) -> int:
             rows,
             now,
             colour=use_colour(sys.stdout),
-            hidden=len(found) - len(repos),
+            hidden=len(wanted) - len(repos),
+            skipped=len(found) - len(wanted),
         )
     )
     sys.stdout.write(output + '\n')

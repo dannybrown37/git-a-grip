@@ -170,9 +170,15 @@ declining to say (protection on a private repo on a free plan). Unprotected
 is spelled out as `none`, in red on a terminal, with failing CI; `NO_COLOR`
 turns colour off.
 
+Repos that will never need attention — a vendored fork, an archive — can be
+named in `~/.config/git-a-grip/remote-skip` (honours `XDG_CONFIG_HOME`), one
+directory name per line, `#` for comments. They are dropped before any `gh`
+call, even with `--all-repos`, and the report counts them.
+
 ```bash
 gag remote
 gag remote --all-repos ~/projects ~/work
+echo old-thing >> ~/.config/git-a-grip/remote-skip
 gag remote --json | jq '.repos[] | select(.status.protection == "none")'
 ```
 
