@@ -231,8 +231,8 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "commitizen", specifier = ">=4.0" },
-    { name = "pyyaml", specifier = ">=6.0" },
+    { name = "commitizen", specifier = ">=4.0,<5" },
+    { name = "pyyaml", specifier = ">=6.0,<7" },
     { name = "ruff", marker = "extra == 'hooks'", specifier = ">=0.6" },
     { name = "zizmor", marker = "extra == 'hooks'", specifier = ">=1.0" },
 ]

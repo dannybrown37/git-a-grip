@@ -94,7 +94,7 @@ repos:
         files: ^(\.github/workflows/.*\.ya?ml|(.*/)?action\.ya?ml)$
         require_serial: true
 
-      - id: tests
+      - id: pytest
         name: Tests
         entry: uv run python -m git_a_grip.hooks pytest tests/ -q
         language: system

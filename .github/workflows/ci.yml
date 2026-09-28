@@ -102,12 +102,14 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
-          # Full history so commitizen can read the tags it bumps from, and a
-          # PAT because pushes made with the default GITHUB_TOKEN do not
-          # trigger workflows -- the tag would land and publish.yml would
-          # never fire.
+          # Full history so commitizen can read the tags it bumps from. A
+          # deploy key, not GITHUB_TOKEN, because GITHUB_TOKEN pushes do not
+          # trigger workflows (publish.yml would never fire); and not a PAT,
+          # because the main ruleset requires a PR and only deploy keys are
+          # exempt -- a personal repo cannot exempt one user without
+          # exempting the owner too.
           fetch-depth: 0
-          token: ${{ secrets.BUMP_TOKEN }}
+          ssh-key: ${{ secrets.DEPLOY_KEY }}
           # Kept on deliberately, unlike the check job: the last step of
           # this job pushes, and it pushes with these credentials.
           persist-credentials: true
