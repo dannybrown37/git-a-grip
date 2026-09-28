@@ -318,6 +318,27 @@ DOCS: dict[str, HookDoc] = {
             'the environment; without one zizmor runs offline and says so.'
         ),
     ),
+    'shellcheck': HookDoc(
+        name='ShellCheck',
+        summary='Lint shell scripts with shellcheck.',
+        description=(
+            'Lint shell scripts with shellcheck, including extensionless '
+            'executables pre-commit recognises by their shebang.'
+        ),
+        config=[
+            '- id: shellcheck',
+            '  args: [--severity=warning]  # optional',
+        ],
+        notes=(
+            'Brings its own shellcheck through additional_dependencies; pin '
+            'yours with `additional_dependencies: [shellcheck-py==x.y.z]`. '
+            'Checks the scripts this commit touched; an extensionless one is '
+            'only seen as shell once it is executable. Never rewrites: its '
+            'suggested fixes can change what a script does, so applying '
+            'them stays yours. Any shellcheck flag goes in `args`, and a '
+            '`.shellcheckrc` in the repo is read as usual.'
+        ),
+    ),
 }
 
 _ENTRY = 'python -m git_a_grip.hooks'

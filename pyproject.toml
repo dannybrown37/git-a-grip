@@ -32,7 +32,7 @@ dependencies = ["commitizen>=4.0,<5", "pyyaml>=6.0,<7"]
 # For running the hook entry points outside pre-commit (`uv tool install
 # 'git-a-grip[hooks]'`). Keep each pin identical to the one in
 # `.pre-commit-hooks.yaml` -- tests/test_packaging.py asserts they match.
-hooks = ["ruff>=0.6", "zizmor>=1.0"]
+hooks = ["ruff>=0.6", "zizmor>=1.0", "shellcheck-py>=0.10"]
 
 [project.scripts]
 # Typed by a person. One namespace, so `gag --help` is the whole surface of

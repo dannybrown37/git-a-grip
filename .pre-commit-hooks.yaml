@@ -179,3 +179,15 @@
   additional_dependencies: [zizmor>=1.0]
   # May call `git add` under `--fix`; two copies in parallel race index.lock.
   require_serial: true
+
+- id: shellcheck
+  name: ShellCheck
+  description: >-
+    Lint shell scripts with shellcheck, including extensionless executables
+    pre-commit recognises by their shebang.
+  entry: python -m git_a_grip.hooks shellcheck
+  language: python
+  types: [shell]
+  # A binary wheel, not a dependency of the package: only this hook needs
+  # it. Pin your own with `additional_dependencies: [shellcheck-py==x.y.z]`.
+  additional_dependencies: [shellcheck-py>=0.10]
