@@ -1,3 +1,9 @@
+## v0.14.1 (2026-09-28)
+
+### Fix
+
+- make vitest run pre-push
+
 ## v0.14.0 (2026-09-28)
 
 ### Feat
