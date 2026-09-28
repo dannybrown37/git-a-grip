@@ -19,7 +19,7 @@ from collections.abc import Callable
 from git_a_grip import commitizen_early, embed_command, embed_tree
 from git_a_grip import mypy_hook, node_hooks, privacy_hook, pytest_hook
 from git_a_grip import regen_file
-from git_a_grip import ruff_hooks, shellcheck_hook, zizmor_hook
+from git_a_grip import ruff_hooks, shellcheck_hook, shfmt_hook, zizmor_hook
 
 Hook = Callable[[list[str]], int]
 
@@ -39,6 +39,7 @@ HOOKS: dict[str, Hook] = {
     'block-private-terms': privacy_hook.main,
     'zizmor': zizmor_hook.main,
     'shellcheck': shellcheck_hook.main,
+    'shfmt': shfmt_hook.main,
 }
 
 # Ids that shipped under an older name. A consuming repo pins a rev, so its

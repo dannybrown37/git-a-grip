@@ -27,6 +27,7 @@ BUNDLED_TOOLS = {
     'ruff': 'ruff>=0.6',
     'zizmor': 'zizmor>=1.0',
     'shellcheck': 'shellcheck-py>=0.10',
+    'shfmt': 'shfmt-py>=4.0',
 }
 # Every hook goes through the dispatcher, never a console script.
 PYTHON_M = 'python -m'
@@ -152,6 +153,7 @@ def test_hooks_that_bundle_a_tool_declare_it_themselves() -> None:
         'ruff-format',
         'zizmor',
         'shellcheck',
+        'shfmt',
     }
     for hook in bundling:
         assert hook['additional_dependencies'] == [_bundled_tool(hook['id'])]

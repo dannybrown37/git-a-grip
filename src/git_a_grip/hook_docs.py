@@ -339,6 +339,26 @@ DOCS: dict[str, HookDoc] = {
             '`.shellcheckrc` in the repo is read as usual.'
         ),
     ),
+    'shfmt': HookDoc(
+        name='shfmt',
+        summary='Format shell scripts with shfmt, re-staging what it rewrote.',
+        description=(
+            'Format shell scripts with `shfmt -w`, re-staging the files it '
+            'rewrote.'
+        ),
+        config=[
+            '- id: shfmt',
+            "  args: [-i, '2', -ci]  # optional",
+        ],
+        notes=(
+            'Brings its own shfmt through additional_dependencies; pin yours '
+            'with `additional_dependencies: [shfmt-py==x.y.z]`. `-w` is '
+            'always passed; other flags go in `args`. With no style flags, '
+            "shfmt reads the repo's `.editorconfig`. Fails only on a script "
+            'it cannot parse. Like shellcheck, an extensionless script is '
+            'only seen as shell once it is executable.'
+        ),
+    ),
 }
 
 _ENTRY = 'python -m git_a_grip.hooks'
