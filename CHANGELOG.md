@@ -1,3 +1,9 @@
+## v0.14.0 (2026-09-28)
+
+### Feat
+
+- add 'gag remote' that shows remote repo status (only active in last 90 days by default)
+
 ## v0.13.0 (2026-09-18)
 
 ### Feat
