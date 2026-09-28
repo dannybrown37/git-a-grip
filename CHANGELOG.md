@@ -1,3 +1,9 @@
+## v0.16.0 (2026-09-28)
+
+### Feat
+
+- add new hook to protect main branch, gag remote detects this as well now (#4)
+
 ## v0.15.1 (2026-09-28)
 
 ### Fix
