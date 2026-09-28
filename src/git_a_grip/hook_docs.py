@@ -271,7 +271,9 @@ DOCS: dict[str, HookDoc] = {
             'so a missing snapshot fails rather than being written and '
             'committed as though it had passed. `--dir=web` runs it from a '
             'subdirectory; `--runner=...` replaces the command outright, so '
-            'say `--runner=npm test -- --run` in full.'
+            'say `--runner=npm test -- --run` in full. Runs at pre-push, not '
+            'pre-commit: add `pre-push` to `default_install_hook_types`, or '
+            'it never runs.'
         ),
     ),
     'pytest': HookDoc(

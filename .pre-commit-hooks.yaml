@@ -126,6 +126,9 @@
   entry: python -m git_a_grip.hooks vitest
   language: python
   types_or: [javascript, jsx, ts, tsx]
+  # Same reasoning as pytest: too slow for every commit. Needs the pre-push
+  # git hook installed, or it never runs -- see the README.
+  stages: [pre-push]
   # Runs the suite, not the changed files: a test that broke lives somewhere
   # other than the file that broke it.
   pass_filenames: false
