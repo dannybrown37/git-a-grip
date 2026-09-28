@@ -318,6 +318,47 @@ DOCS: dict[str, HookDoc] = {
             'the environment; without one zizmor runs offline and says so.'
         ),
     ),
+    'shellcheck': HookDoc(
+        name='ShellCheck',
+        summary='Lint shell scripts with shellcheck.',
+        description=(
+            'Lint shell scripts with shellcheck, including extensionless '
+            'executables pre-commit recognises by their shebang.'
+        ),
+        config=[
+            '- id: shellcheck',
+            '  args: [--severity=warning]  # optional',
+        ],
+        notes=(
+            'Brings its own shellcheck through additional_dependencies; pin '
+            'yours with `additional_dependencies: [shellcheck-py==x.y.z]`. '
+            'Checks the scripts this commit touched; an extensionless one is '
+            'only seen as shell once it is executable. Never rewrites: its '
+            'suggested fixes can change what a script does, so applying '
+            'them stays yours. Any shellcheck flag goes in `args`, and a '
+            '`.shellcheckrc` in the repo is read as usual.'
+        ),
+    ),
+    'shfmt': HookDoc(
+        name='shfmt',
+        summary='Format shell scripts with shfmt, re-staging what it rewrote.',
+        description=(
+            'Format shell scripts with `shfmt -w`, re-staging the files it '
+            'rewrote.'
+        ),
+        config=[
+            '- id: shfmt',
+            "  args: [-i, '2', -ci]  # optional",
+        ],
+        notes=(
+            'Brings its own shfmt through additional_dependencies; pin yours '
+            'with `additional_dependencies: [shfmt-py==x.y.z]`. `-w` is '
+            'always passed; other flags go in `args`. With no style flags, '
+            "shfmt reads the repo's `.editorconfig`. Fails only on a script "
+            'it cannot parse. Like shellcheck, an extensionless script is '
+            'only seen as shell once it is executable.'
+        ),
+    ),
 }
 
 _ENTRY = 'python -m git_a_grip.hooks'

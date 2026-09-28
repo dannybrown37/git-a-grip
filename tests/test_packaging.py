@@ -23,7 +23,12 @@ HOOKS = yaml.safe_load((ROOT / '.pre-commit-hooks.yaml').read_text())
 # The tools a hook brings with it, keyed by the substring of the hook ids
 # that need one. No command imports any of them, so they must stay out of
 # the base dependencies and be declared per hook instead.
-BUNDLED_TOOLS = {'ruff': 'ruff>=0.6', 'zizmor': 'zizmor>=1.0'}
+BUNDLED_TOOLS = {
+    'ruff': 'ruff>=0.6',
+    'zizmor': 'zizmor>=1.0',
+    'shellcheck': 'shellcheck-py>=0.10',
+    'shfmt': 'shfmt-py>=4.0',
+}
 # Every hook goes through the dispatcher, never a console script.
 PYTHON_M = 'python -m'
 
@@ -147,6 +152,8 @@ def test_hooks_that_bundle_a_tool_declare_it_themselves() -> None:
         'ruff-check',
         'ruff-format',
         'zizmor',
+        'shellcheck',
+        'shfmt',
     }
     for hook in bundling:
         assert hook['additional_dependencies'] == [_bundled_tool(hook['id'])]

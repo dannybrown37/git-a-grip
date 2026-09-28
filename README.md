@@ -33,6 +33,8 @@ repos:
       - id: vitest
       - id: block-private-terms
       - id: zizmor
+      - id: shellcheck
+      - id: shfmt
 ```
 
 Nothing to install. Your project needs no `ruff`, `cz` or `uv` on PATH —
@@ -55,6 +57,8 @@ environment, so they shell out to `uv run` / your package manager.)
 | `tsc` | Type-checks *the project*, never bare filenames — given filenames, tsc silently ignores your `tsconfig.json`. `--dir=web` for a monorepo. |
 | `block-private-terms` | Blocks a commit that *adds* a line containing one of your own private terms — an employer, a client, an internal hostname. A secret scanner can't find these; they're ordinary words, sensitive only because of who typed them. The terms live outside the tree (see [`gag privacy`](#gag-privacy--the-terms-the-block-private-terms-hook-blocks-on)), so nothing sensitive is committed to configure it. Unconfigured, it warns and passes. |
 | `zizmor` | Audits your GitHub Actions workflows with [zizmor](https://docs.zizmor.sh) — the `pull_request_target` that checks out the PR head, the `${{ github.event.* }}` interpolated straight into a `run:` block. Checks the workflows the commit touched, and brings its own zizmor. `args: [--fix]` if you want it to rewrite, and the rewrite is re-staged like every other fix here. |
+| `shellcheck` | Lints shell scripts with [ShellCheck](https://www.shellcheck.net) — the unquoted `$var` that splits on a path with a space, the `cd` with no `\|\| exit`. Finds extensionless scripts by their shebang — once they're executable, since that's the only time pre-commit reads one — and brings its own shellcheck. Reports only, never rewrites: its fixes can change what a script does. |
+| `shfmt` | Formats shell scripts with [shfmt](https://github.com/mvdan/sh), re-staged like `ruff-format`. No style flags means it follows your `.editorconfig`; or say it in `args: [-i, '2', -ci]`. Fails only on a script it can't parse. Pairs with `shellcheck`: one fixes layout, the other reports bugs. |
 | `vitest` | `vitest run`, never the watch mode a bare `vitest` starts — that hangs the commit with no clue why. Sets `CI=true`, so a missing snapshot fails instead of being written and committed. Runs on **push**, like `pytest` — same `pre-push` install requirement. |
 
 Anything in `args` is passed through to the underlying tool. Pin your own
@@ -265,6 +269,8 @@ repos:
   regen-file           Run a generator script, and re-stage what it rewrote.
   ruff-check           Lint with `ruff check --fix`, re-staging what it fixed.
   ruff-format          Format with `ruff format`, re-staging what it rewrote.
+  shellcheck           Lint shell scripts with shellcheck.
+  shfmt                Format shell scripts with shfmt, re-staging what it rewrote.
   tsc                  Type-check the project with the project's own tsc.
   vitest               Run the project's vitest suite once, never in watch mode.
   zizmor               Audit GitHub Actions workflows for the mistakes that leak.
@@ -333,6 +339,8 @@ git-a-grip/
 |       |-- remote.py
 |       |-- restage.py
 |       |-- ruff_hooks.py
+|       |-- shellcheck_hook.py
+|       |-- shfmt_hook.py
 |       |-- sync.py
 |       |-- version.py
 |       `-- zizmor_hook.py
@@ -358,6 +366,8 @@ git-a-grip/
 |   |-- test_remote.py
 |   |-- test_restage.py
 |   |-- test_ruff_hooks.py
+|   |-- test_shellcheck_hook.py
+|   |-- test_shfmt_hook.py
 |   |-- test_sync.py
 |   |-- test_version.py
 |   `-- test_zizmor_hook.py
