@@ -26,7 +26,7 @@ classifiers = [
 # env, so `.pre-commit-hooks.yaml` declares them per hook via
 # `additional_dependencies` and only the hooks that need one pay for it. A
 # consuming repo still passes nothing.
-dependencies = ["commitizen>=4.0", "pyyaml>=6.0"]
+dependencies = ["commitizen>=4.0,<5", "pyyaml>=6.0,<7"]
 
 [project.optional-dependencies]
 # For running the hook entry points outside pre-commit (`uv tool install
