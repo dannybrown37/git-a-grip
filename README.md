@@ -16,7 +16,7 @@ default_install_hook_types: [pre-commit, pre-push]  # protect-branch, pytest, vi
 
 repos:
   - repo: https://github.com/dannybrown37/git-a-grip
-    rev: v0.16.0
+    rev: v0.16.1
     hooks:
       - id: commitizen-early
       - id: protect-branch
@@ -267,7 +267,7 @@ Turn one on in .pre-commit-config.yaml:
 
 repos:
   - repo: https://github.com/dannybrown37/git-a-grip
-    rev: v0.16.0
+    rev: v0.16.1
     hooks:
       - id: <one of the below>
       - id: <...any number of others>
