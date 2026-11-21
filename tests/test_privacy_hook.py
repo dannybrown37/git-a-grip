@@ -49,6 +49,17 @@ def _stage(repo: Path, name: str, text: str) -> None:
     _git(repo, 'add', name)
 
 
+LONG = ''.join(f'line {n}\n' for n in range(20))
+
+
+def _rename_with_edit(repo: Path, added: str) -> None:
+    """Stage a move that git reports as R, not as a delete plus an add."""
+    _stage(repo, 'long.txt', LONG)
+    _git(repo, 'commit', '-m', 'feat: long')
+    _git(repo, 'mv', 'long.txt', 'moved.txt')
+    _stage(repo, 'moved.txt', LONG + added)
+
+
 class TestAddedLines:
     def test_a_new_file_reports_every_line_with_its_number(
         self,
@@ -91,6 +102,39 @@ class TestAddedLines:
         _git(repo, 'rm', 'kept.txt')
 
         assert privacy_hook.added_lines([]) == []
+
+    def test_a_renamed_file_reports_what_the_rename_adds(
+        self,
+        repo: Path,
+    ) -> None:
+        # git reports a rename with edits as R, not M; a filter that leaves
+        # R out lets a term ride in on any `git mv`.
+        _rename_with_edit(repo, 'appended\n')
+
+        assert privacy_hook.added_lines([]) == [('moved.txt', 21, 'appended')]
+
+    def test_a_line_starting_with_plus_plus_is_content_not_a_header(
+        self,
+        repo: Path,
+    ) -> None:
+        # Added `++i;` reaches the diff as `+++i;`, which is only a file
+        # header when it sits between `--- ` and the first `@@`.
+        _stage(repo, 'a.c', '++i;\n++ note\n')
+        _stage(repo, 'b.txt', 'b\n')
+
+        assert privacy_hook.added_lines([]) == [
+            ('a.c', 1, '++i;'),
+            ('a.c', 2, '++ note'),
+            ('b.txt', 1, 'b'),
+        ]
+
+    def test_content_that_is_not_utf8_is_still_read(self, repo: Path) -> None:
+        (repo / 'latin1.txt').write_bytes(b'caf\xe9 ok\n')
+        _git(repo, 'add', 'latin1.txt')
+
+        [(name, number, text)] = privacy_hook.added_lines([])
+        assert (name, number) == ('latin1.txt', 1)
+        assert text.endswith(' ok')
 
 
 class TestMain:
@@ -150,6 +194,45 @@ class TestMain:
         _stage(repo, 'new.txt', 'the quarry\n')
 
         assert privacy_hook.main([f'--terms-file={other}']) == 1
+
+    def test_the_report_names_the_terms_file_that_was_used(
+        self,
+        repo: Path,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        other = repo / 'other-terms'
+        other.write_text('quarry\n')
+        other.chmod(0o600)
+        _stage(repo, 'new.txt', 'the quarry\n')
+
+        privacy_hook.main([f'--terms-file={other}'])
+
+        assert f'The terms are in {other}.' in capsys.readouterr().err
+
+    def test_a_term_in_a_plus_plus_line_blocks_the_commit(
+        self,
+        repo: Path,
+    ) -> None:
+        _stage(repo, 'new.c', '++dannybrown;\n')
+
+        assert privacy_hook.main([]) == 1
+
+    def test_a_term_added_during_a_rename_blocks_the_commit(
+        self,
+        repo: Path,
+    ) -> None:
+        _rename_with_edit(repo, 'by dannybrown\n')
+
+        assert privacy_hook.main([]) == 1
+
+    def test_a_term_in_non_utf8_content_blocks_the_commit(
+        self,
+        repo: Path,
+    ) -> None:
+        (repo / 'latin1.txt').write_bytes(b'caf\xe9 by dannybrown\n')
+        _git(repo, 'add', 'latin1.txt')
+
+        assert privacy_hook.main([]) == 1
 
     @pytest.mark.usefixtures('repo')
     def test_help_exits_clean(

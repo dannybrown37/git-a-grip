@@ -205,7 +205,16 @@ def biome(argv: list[str]) -> int:
         return 0
     before = restage.digests(paths)
     code = run(
-        [*runner, 'biome', 'check', '--write', *args],
+        # A lockfile-only commit hands biome nothing it doesn't ignore, and
+        # biome treats an empty run as an error.
+        [
+            *runner,
+            'biome',
+            'check',
+            '--write',
+            '--no-errors-on-unmatched',
+            *args,
+        ],
         workdir,
         'biome',
     )

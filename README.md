@@ -54,7 +54,7 @@ environment, so they shell out to `uv run` / your package manager.)
 | `embed-tree` | Keeps a file tree in your README true. Drop `<!-- tree:start -->` / `<!-- tree:end -->` in, and it regenerates and re-stages on every commit. Contents come from `git ls-files`, so it's exactly what's committed. (Was `readme-tree`; the old id still works.) |
 | `embed-command` | Keeps a command's output — `mytool --help`, `make help` — true in your README. Name the command in `args`; nothing is discovered and run on its own. |
 | `regen-file` | Replaces `bash -c 'run-the-script && git add the-file'`. Runs the generator you name and re-stages the files you name — only the ones whose contents actually moved, and it fails the commit if the script quietly stopped writing one. Use `embed-command` instead when the script owns only a marked block. |
-| `biome` | `biome check --write` — lint + format in one Rust binary, ~100x faster than eslint. Fixes are re-staged. `--dir=web` for a monorepo. Default `types_or` covers JS, TS, JSON, CSS; add `files:` for Svelte/Astro/Vue. |
+| `biome` | `biome check --write` — lint + format in one Rust binary, ~100x faster than eslint. Fixes are re-staged. `--dir=web` for a monorepo. Default `types_or` covers JS, TS, JSON, CSS; add `files:` for Svelte/Astro/Vue. A commit that only touches files `biome.json` ignores (a lockfile) passes. |
 | `eslint` | `eslint --fix`, re-staged, `--max-warnings=0` by default so warnings can't pile up forever. `--dir=web` for a monorepo. |
 | `tsc` | Type-checks *the project*, never bare filenames — given filenames, tsc silently ignores your `tsconfig.json`. `--dir=web` for a monorepo. |
 | `block-private-terms` | Blocks a commit that *adds* a line containing one of your own private terms — an employer, a client, an internal hostname. A secret scanner can't find these; they're ordinary words, sensitive only because of who typed them. The terms live outside the tree (see [`gag privacy`](#gag-privacy--the-terms-the-block-private-terms-hook-blocks-on)), so nothing sensitive is committed to configure it. Unconfigured, it warns and passes. |
@@ -334,6 +334,7 @@ git-a-grip/
 |   |-- workflows/
 |   |   |-- ci.yml
 |   |   `-- publish.yml
+|   |-- dependabot.yml
 |   `-- zizmor.yml
 |-- src/
 |   `-- git_a_grip/

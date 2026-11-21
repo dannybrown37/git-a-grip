@@ -249,7 +249,9 @@ DOCS: dict[str, HookDoc] = {
             'runs it from a subdirectory, for a monorepo whose `biome.json` '
             'and `node_modules` live there; files outside that subdirectory '
             'are skipped. The default `types_or` covers JS, TS, JSON and CSS; '
-            'add `files:` patterns for Svelte, Astro or Vue.'
+            'add `files:` patterns for Svelte, Astro or Vue. A commit whose '
+            'only matches are files `biome.json` ignores (a '
+            '`package-lock.json`) passes rather than failing on an empty run.'
         ),
     ),
     'eslint': HookDoc(
