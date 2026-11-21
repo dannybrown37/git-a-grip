@@ -74,6 +74,22 @@ def test_biome_runs_check_write(
     assert calls[0][:5] == ['npx', '--no-install', 'biome', 'check', '--write']
 
 
+def test_biome_passes_when_every_file_is_one_it_ignores(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # `types_or: [json]` hands biome package-lock.json, which projects
+    # ignore in biome.json; unflagged, biome fails a lockfile-only commit
+    # with "No files were processed".
+    calls = _record(monkeypatch, tmp_path)
+    lockfile = tmp_path / 'package-lock.json'
+    lockfile.write_text('{}\n')
+
+    node_hooks.biome([str(lockfile)])
+
+    assert '--no-errors-on-unmatched' in calls[0]
+
+
 def test_biome_restages_what_it_rewrote(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

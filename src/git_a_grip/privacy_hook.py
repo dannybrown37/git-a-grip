@@ -64,26 +64,37 @@ def added_lines(paths: list[str]) -> list[tuple[str, int, str]]:
             '--cached',
             '-U0',
             '--no-color',
-            '--diff-filter=ACM',
+            # R too: git reports a move with edits as a rename, and its
+            # hunks are only the lines the move added.
+            '--diff-filter=ACMR',
             '--',
             *paths,
         ],
         capture_output=True,
-        text=True,
+        # Terms are text, but the files need not be: one Latin-1 byte must
+        # not turn the scan into a traceback.
+        encoding='utf-8',
+        errors='replace',
         check=False,
     )
     found: list[tuple[str, int, str]] = []
     name = ''
     number = 0
+    # `+++ ` is a header only before a file's first hunk; after it, an added
+    # line reading `++i;` arrives as `+++i;` and is content.
+    in_header = False
     for line in result.stdout.splitlines():
-        if line.startswith('+++ '):
+        if line.startswith('diff --git '):
+            in_header = True
+        elif in_header and line.startswith('+++ '):
             target = line[4:].strip()
             # `+++ b/path`, or /dev/null for a delete that the filter above
             # should already have dropped.
             name = target[2:] if target.startswith('b/') else target
         elif line.startswith('@@'):
+            in_header = False
             number = _hunk_start(line)
-        elif line.startswith('+') and not line.startswith('+++'):
+        elif not in_header and line.startswith('+'):
             found.append((name, number, line[1:]))
             number += 1
     return found
@@ -98,7 +109,10 @@ def _hunk_start(header: str) -> int:
         return 0
 
 
-def _report(hits: list[tuple[str, int, str]]) -> None:
+def _report(
+    hits: list[tuple[str, int, str]],
+    terms_path: Path | None,
+) -> None:
     for name, number, term in hits:
         sys.stderr.write(
             f'{name}:{number}: adds a privacy term '
@@ -107,7 +121,7 @@ def _report(hits: list[tuple[str, int, str]]) -> None:
     sys.stderr.write(
         f'\n{len(hits)} blocked. Remove the content, or drop the term with '
         f'`gag privacy remove`.\nThe terms are in '
-        f'{privacy_terms.resolve() or "your terms file"}.\n',
+        f'{terms_path or "your terms file"}.\n',
     )
 
 
@@ -145,7 +159,7 @@ def main(argv: list[str] | None = None) -> int:
     ]
     if not hits:
         return 0
-    _report(hits)
+    _report(hits, path)
     return 1
 
 
