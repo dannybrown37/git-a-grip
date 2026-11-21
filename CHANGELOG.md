@@ -1,3 +1,9 @@
+## v0.16.3 (2026-11-21)
+
+### Fix
+
+- bump the python-minor-and-patch group with 5 updates (#10)
+
 ## v0.16.2 (2026-11-21)
 
 ### Fix
