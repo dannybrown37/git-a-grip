@@ -80,5 +80,5 @@ def main(argv: list[str]) -> int:
     target = root / doc_block.flag(argv, 'file', DEFAULT_FILE)
     marker = doc_block.flag(argv, 'marker', DEFAULT_MARKER)
     depth = int(doc_block.flag(argv, 'depth', str(DEFAULT_DEPTH)))
-    tree = build_tree(tracked_files(), root.name, depth)
+    tree = build_tree(tracked_files(), doc_block.repo_name(), depth)
     return doc_block.embed('embed-tree', root, target, marker, tree)

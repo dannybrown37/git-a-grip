@@ -4,12 +4,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+import pytest
+
 from git_a_grip import doc_block
 
 if TYPE_CHECKING:
     from pathlib import Path
-
-    import pytest
 
 
 def test_replace_block_fills_between_markers() -> None:
@@ -113,3 +113,23 @@ def test_embed_reports_a_missing_file(tmp_path: Path) -> None:
     missing = tmp_path / 'NOPE.md'
 
     assert doc_block.embed('t', tmp_path, missing, 'x', 'body') == 1
+
+
+@pytest.mark.parametrize('checkout', [0, 1], ids=['clone', 'worktree'])
+def test_repo_name_is_the_clone_even_from_a_worktree(
+    clone_with_worktree: tuple[Path, Path],
+    monkeypatch: pytest.MonkeyPatch,
+    checkout: int,
+) -> None:
+    monkeypatch.chdir(clone_with_worktree[checkout])
+
+    assert doc_block.repo_name() == 'alpha'
+
+
+def test_repo_name_outside_git_is_the_cwd(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.chdir(tmp_path)
+
+    assert doc_block.repo_name() == tmp_path.name

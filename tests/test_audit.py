@@ -5,12 +5,12 @@ from __future__ import annotations
 import json
 from typing import TYPE_CHECKING
 
+import pytest
+
 from git_a_grip import audit
 
 if TYPE_CHECKING:
     from pathlib import Path
-
-    import pytest
 
 BAD_ARGS_CODE = 2
 
@@ -65,6 +65,14 @@ def test_find_repos_skips_non_repos_and_nested_dirs(tmp_path: Path) -> None:
     names = [p.name for p in audit.find_repos([root])]
 
     assert names == ['alpha', 'beta', 'gamma']
+
+
+def test_find_repos_skips_worktrees_of_a_clone(
+    clone_with_worktree: tuple[Path, Path],
+) -> None:
+    clone, _ = clone_with_worktree
+
+    assert audit.find_repos([clone.parent]) == [clone]
 
 
 def test_report_groups_by_source(tmp_path: Path) -> None:
@@ -166,3 +174,15 @@ def test_stale_pins_are_flagged_against_the_installed_version() -> None:
     assert audit.rev_status('v0.3.1', '0.3.1') == 'current'
     assert audit.rev_status('v9.0.0', '0.3.1') == 'ahead'
     assert audit.rev_status('', '0.3.1') == ''
+
+
+@pytest.mark.parametrize('checkout', [0, 1], ids=['clone', 'worktree'])
+def test_default_roots_are_the_clones_siblings_even_from_a_worktree(
+    clone_with_worktree: tuple[Path, Path],
+    monkeypatch: pytest.MonkeyPatch,
+    checkout: int,
+) -> None:
+    clone = clone_with_worktree[0]
+    monkeypatch.chdir(clone_with_worktree[checkout])
+
+    assert audit.default_roots() == [clone.parent]

@@ -16,7 +16,6 @@ not an absence of one.
 from __future__ import annotations
 
 import json
-import subprocess
 import sys
 from collections import defaultdict
 from dataclasses import dataclass, field
@@ -25,7 +24,7 @@ from typing import Any
 
 import yaml
 
-from git_a_grip import version
+from git_a_grip import doc_block, version
 
 CONFIG_NAME = '.pre-commit-config.yaml'
 SELF_MARKER = version.DIST_NAME
@@ -75,16 +74,24 @@ class RepoAudit:
 
 
 def find_repos(roots: list[Path]) -> list[Path]:
-    """Return every git working tree under `roots`, not recursing into one."""
+    """Return every clone under `roots`, not recursing into one.
+
+    A linked worktree (or submodule) has a `.git` *file* pointing back at a
+    clone, so it is skipped: it is another checkout of a repo already
+    counted, and often a live agent's workspace that `gag sync` must not
+    edit underneath it.
+    """
     found: list[Path] = []
     stack = [r.resolve() for r in roots]
     while stack:
         current = stack.pop()
         if not current.is_dir() or current.name in _PRUNED:
             continue
-        if (current / '.git').exists():
+        dot_git = current / '.git'
+        if dot_git.is_dir():
             found.append(current)
-            continue  # a repo's subdirectories are part of that repo
+        if dot_git.exists():
+            continue  # a checkout's subdirectories are part of that checkout
         stack.extend(child for child in current.iterdir() if child.is_dir())
     return sorted(found)
 
@@ -275,13 +282,8 @@ def as_json(audits: list[RepoAudit]) -> str:
 
 def default_roots() -> list[Path]:
     """The directory holding this repo -- i.e. its sibling projects."""
-    top = subprocess.run(
-        ['git', 'rev-parse', '--show-toplevel'],  # noqa: S607
-        capture_output=True,
-        text=True,
-        check=False,
-    ).stdout.strip()
-    return [Path(top).parent if top else Path.cwd()]
+    clone = doc_block.clone_root()
+    return [clone.parent if clone else Path.cwd()]
 
 
 def main(argv: list[str] | None = None) -> int:

@@ -80,6 +80,19 @@ def test_plan_finds_stale_repos_without_writing(tmp_path: Path) -> None:
     assert (root / 'alpha' / audit.CONFIG_NAME).read_text() == CONFIG
 
 
+def test_plan_leaves_worktrees_alone(tmp_path: Path) -> None:
+    root = tmp_path / 'projects'
+    _make_repo(root, 'alpha', CONFIG)
+    worktree = root / 'alpha-worktrees' / 'feat'
+    worktree.mkdir(parents=True)
+    (worktree / '.git').write_text('gitdir: ../../alpha/.git/worktrees/feat\n')
+    (worktree / audit.CONFIG_NAME).write_text(CONFIG)
+
+    changes = sync.plan([root], version.REPO_URL, 'v0.4.0')
+
+    assert [c.path.parent.name for c in changes] == ['alpha']
+
+
 def test_apply_writes_the_planned_changes(tmp_path: Path) -> None:
     root = tmp_path / 'projects'
     _make_repo(root, 'alpha', CONFIG)
