@@ -26,7 +26,7 @@ jobs:
         # for; widen it the day that floor moves.
         python-version: ['3.13']
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           # Nothing in this job talks to GitHub after the clone, so the
           # token has no reason to stay in .git/config where every later
@@ -100,7 +100,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           # Full history so commitizen can read the tags it bumps from. A
           # deploy key, not GITHUB_TOKEN, because GITHUB_TOKEN pushes do not
