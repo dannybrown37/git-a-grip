@@ -89,6 +89,32 @@ def repo_root() -> Path:
     return Path(top) if top else Path.cwd()
 
 
+def clone_root() -> Path | None:
+    """Return the clone a checkout belongs to, even from a worktree.
+
+    `repo_root()` in a linked worktree is the worktree's own directory, so
+    anything keyed on it -- the README tree's name, the siblings `gag audit`
+    scans -- quietly becomes about the worktree. The common git dir belongs
+    to the clone. A bare clone is its own common dir.
+    """
+    common = subprocess.run(
+        ['git', 'rev-parse', '--path-format=absolute', '--git-common-dir'],  # noqa: S607
+        capture_output=True,
+        text=True,
+        check=False,
+    ).stdout.strip()
+    if not common:
+        return None
+    path = Path(common)
+    return path.parent if path.name == '.git' else path
+
+
+def repo_name() -> str:
+    """Return the clone's directory name, even when run from a worktree."""
+    clone = clone_root()
+    return clone.name.removesuffix('.git') if clone else repo_root().name
+
+
 def embed(  # noqa: PLR0917
     tool: str,
     root: Path,

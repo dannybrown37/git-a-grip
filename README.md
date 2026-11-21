@@ -119,10 +119,15 @@ uvx --from git-a-grip gag …   # or one-off
 
 ### `gag audit` — what does every repo pin?
 
-Walks your project directories, stops at each git working tree, and reports
+Walks your project directories, stops at each git clone, and reports
 which hooks each one uses and at what rev — labelled `(behind)`, `(ahead)`,
 `(unpinned)` against the version you have installed. Third-party hooks and
 `repo: local` one-offs are listed too.
+
+Linked worktrees (`git worktree add`, where `.git` is a file) are skipped:
+each is another checkout of a clone already counted. So `gag remote` lists a
+repo once however many worktrees it has, and `gag sync` never edits a config
+inside one.
 
 ```bash
 gag audit
@@ -361,6 +366,7 @@ git-a-grip/
 |       |-- version.py
 |       `-- zizmor_hook.py
 |-- tests/
+|   |-- conftest.py
 |   |-- test_audit.py
 |   |-- test_cli.py
 |   |-- test_commitizen_early.py

@@ -47,6 +47,7 @@ def test_depth_prunes_deep_paths() -> None:
 def _sandbox(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """Point the hook at a fake repo, with git stubbed out."""
     monkeypatch.setattr(doc_block, 'repo_root', lambda: tmp_path)
+    monkeypatch.setattr(doc_block, 'repo_name', lambda: 'proj')
     monkeypatch.setattr(embed_tree, 'tracked_files', lambda: PATHS)
     monkeypatch.setattr(doc_block.restage, 'add', lambda _paths: 0)
 
