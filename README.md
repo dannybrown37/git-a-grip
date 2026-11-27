@@ -124,6 +124,12 @@ which hooks each one uses and at what rev — labelled `(behind)`, `(ahead)`,
 `(unpinned)` against the version you have installed. Third-party hooks and
 `repo: local` one-offs are listed too.
 
+Each config is read from origin's default branch (as of your last fetch),
+not the checkout, so a clone you haven't pulled since a release isn't
+reported as behind. No remote, or no config on origin, falls back to the
+working tree; `--json` says which via `config_from`. Run `git fetch` first
+if your remote refs are old — the audit never touches the network.
+
 Linked worktrees (`git worktree add`, where `.git` is a file) are skipped:
 each is another checkout of a clone already counted. So `gag remote` lists a
 repo once however many worktrees it has, and `gag sync` never edits a config
