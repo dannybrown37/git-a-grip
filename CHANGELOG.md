@@ -1,3 +1,9 @@
+## v0.16.4 (2026-11-27)
+
+### Fix
+
+- gag audit reads configs from origin, not stale checkouts (#12)
+
 ## v0.16.3 (2026-11-21)
 
 ### Fix

@@ -182,7 +182,7 @@ wheels = [
 
 [[package]]
 name = "git-a-grip"
-version = "0.16.3"
+version = "0.16.4"
 source = { editable = "." }
 dependencies = [
     { name = "commitizen" },
