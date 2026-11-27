@@ -10,6 +10,7 @@ import pytest
 from git_a_grip import audit
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from pathlib import Path
 
 BAD_ARGS_CODE = 2
@@ -186,3 +187,75 @@ def test_default_roots_are_the_clones_siblings_even_from_a_worktree(
     monkeypatch.chdir(clone_with_worktree[checkout])
 
     assert audit.default_roots() == [clone.parent]
+
+
+@pytest.mark.parametrize(
+    ('setup', 'rev', 'config_from'),
+    [
+        ([], 'v0.4.0', 'origin/HEAD'),
+        ([('remote', 'set-head', 'origin', '-d')], 'v0.4.0', 'origin/main'),
+        ([('remote', 'remove', 'origin')], 'v0.3.1', 'working tree'),
+        (
+            [
+                ('rm', '--cached', '-q', audit.CONFIG_NAME),
+                ('commit', '-m', 'drop config'),
+                ('push', '-f', 'origin', 'HEAD:main'),
+            ],
+            'v0.3.1',
+            'working tree',
+        ),
+        (
+            [
+                ('push', 'origin', 'HEAD:master'),
+                ('rm', '--cached', '-q', audit.CONFIG_NAME),
+                ('commit', '-m', 'drop config'),
+                ('push', '-f', 'origin', 'HEAD:main'),
+            ],
+            'v0.3.1',
+            'working tree',
+        ),
+    ],
+    ids=[
+        'origin-head',
+        'no-origin-head',
+        'no-remote',
+        'not-on-origin',
+        'stale-master-is-not-the-default',
+    ],
+)
+def test_audit_reads_the_config_origin_has_not_the_stale_checkout(  # noqa: PLR0917 -- fixtures plus parametrize
+    stale_clone: Path,
+    git: Callable[..., None],
+    capsys: pytest.CaptureFixture[str],
+    setup: list[tuple[str, ...]],
+    rev: str,
+    config_from: str,
+) -> None:
+    for args in setup:
+        git('-C', stale_clone, *args)
+
+    assert audit.main([str(stale_clone.parent), '--json']) == 0
+
+    (repo,) = json.loads(capsys.readouterr().out)['repos']
+    assert [hook['rev'] for hook in repo['hooks']] == [rev]
+    assert repo['config_from'] == config_from
+
+
+def test_audit_repo_reads_the_working_tree_unless_asked(
+    stale_clone: Path,
+) -> None:
+    assert audit.audit_repo(stale_clone).uses[0].rev == 'v0.3.1'
+    assert audit.audit_repo(stale_clone, from_origin=True).uses[0].rev == (
+        'v0.4.0'
+    )
+
+
+def test_audit_without_git_on_path_reads_the_working_tree(
+    stale_clone: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv('PATH', '')
+
+    found = audit.audit_repo(stale_clone, from_origin=True)
+
+    assert (found.uses[0].rev, found.config_from) == ('v0.3.1', 'working tree')

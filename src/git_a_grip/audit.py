@@ -11,11 +11,19 @@ and at what rev, what other third-party hooks have accumulated, and which
 
 Repos with no config at all are listed too -- an unhooked repo is a finding,
 not an absence of one.
+
+Each config is read from origin's default branch as of the last fetch, not
+from the checkout. A clone untouched since its last release still has the
+old rev on disk, and reporting that as `behind` sends you to bump a repo
+whose default branch is already current. Where there is no origin, or
+origin has no config, the working tree is the only evidence there is, and
+`--json` names which one each repo came from.
 """
 
 from __future__ import annotations
 
 import json
+import subprocess
 import sys
 from collections import defaultdict
 from dataclasses import dataclass, field
@@ -28,6 +36,10 @@ from git_a_grip import doc_block, version
 
 CONFIG_NAME = '.pre-commit-config.yaml'
 SELF_MARKER = version.DIST_NAME
+WORKING_TREE = 'working tree'
+# origin/HEAD only exists in a repo that was cloned (or `remote set-head`);
+# one created locally and pushed has the branch but not the pointer.
+_ORIGIN_REFS = ('origin/HEAD', 'origin/main', 'origin/master')
 # Directories that never contain a repo we care about but do contain
 # thousands of files, including vendored copies of other repos' configs.
 _PRUNED = {
@@ -66,6 +78,7 @@ class RepoAudit:
     has_config: bool = True
     error: str = ''
     uses: list[HookUse] = field(default_factory=list)
+    config_from: str = ''
 
     @property
     def name(self) -> str:
@@ -117,18 +130,67 @@ def _hook_uses(config: dict[str, Any]) -> list[HookUse]:
     return uses
 
 
-def audit_repo(path: Path) -> RepoAudit:
-    """Read one repo's pre-commit config, tolerating a broken or absent one."""
-    config_path = path / CONFIG_NAME
-    if not config_path.is_file():
-        return RepoAudit(path=path, has_config=False)
+def _origin_config(path: Path) -> tuple[str, str] | None:
+    """The config on origin's default branch, as of the last fetch.
+
+    No fetch here: the audit stays offline, fast and read-only, and a repo
+    fetched recently -- by `git pull`, an IDE, `gh` -- already has the ref.
+    """
+    # Only the first ref that resolves counts: falling through to a stale
+    # origin/master because the real default branch dropped its config
+    # would report a pin that is no longer anywhere that matters.
+    for ref in _ORIGIN_REFS:
+        if _git(path, 'rev-parse', '--verify', '--quiet', f'{ref}^{{commit}}'):
+            shown = _git(path, 'show', f'{ref}:{CONFIG_NAME}')
+            return (ref, shown) if shown is not None else None
+    return None
+
+
+def _git(path: Path, *args: str) -> str | None:
+    """Stdout of a git command, or None if it failed or git is missing."""
     try:
-        loaded = yaml.safe_load(config_path.read_text(encoding='utf-8'))
-    except (yaml.YAMLError, OSError, UnicodeDecodeError) as exc:
-        return RepoAudit(path=path, error=str(exc).splitlines()[0])
+        done = subprocess.run(  # noqa: S603 -- fixed argv, no shell
+            ['git', '-C', str(path), *args],  # noqa: S607
+            capture_output=True,
+            encoding='utf-8',
+            errors='replace',
+            check=False,
+        )
+    except OSError:
+        return None
+    return done.stdout if done.returncode == 0 else None
+
+
+def audit_repo(path: Path, *, from_origin: bool = False) -> RepoAudit:
+    """Read one repo's pre-commit config, tolerating a broken or absent one.
+
+    `from_origin` reads what origin's default branch pins rather than the
+    checkout, so a clone nobody has pulled since a release does not report
+    as behind. Off by default: what the local git hooks enforce is the
+    working tree, and that is what `gag remote`'s guard check needs.
+    """
+    origin = _origin_config(path) if from_origin else None
+    if origin:
+        config_from, text = origin
+    else:
+        config_from, config_path = WORKING_TREE, path / CONFIG_NAME
+        if not config_path.is_file():
+            return RepoAudit(path=path, has_config=False)
+        try:
+            text = config_path.read_text(encoding='utf-8')
+        except (OSError, UnicodeDecodeError) as exc:
+            return RepoAudit(path=path, error=str(exc).splitlines()[0])
+    found = RepoAudit(path=path, config_from=config_from)
+    try:
+        loaded = yaml.safe_load(text)
+    except yaml.YAMLError as exc:
+        found.error = str(exc).splitlines()[0]
+        return found
     if not isinstance(loaded, dict):
-        return RepoAudit(path=path, error='config is not a mapping')
-    return RepoAudit(path=path, uses=_hook_uses(loaded))
+        found.error = 'config is not a mapping'
+        return found
+    found.uses = _hook_uses(loaded)
+    return found
 
 
 def is_self(use: HookUse) -> bool:
@@ -255,6 +317,7 @@ def as_json(audits: list[RepoAudit]) -> str:
             'name': a.name,
             'has_config': a.has_config,
             'error': a.error,
+            'config_from': a.config_from,
             'hooks': [
                 {
                     'repo': u.repo,
@@ -301,7 +364,10 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 2
 
-    audits = [audit_repo(p) for p in find_repos(paths or default_roots())]
+    audits = [
+        audit_repo(p, from_origin=True)
+        for p in find_repos(paths or default_roots())
+    ]
     sys.stdout.write((as_json if want_json else render)(audits) + '\n')
     return 0
 
